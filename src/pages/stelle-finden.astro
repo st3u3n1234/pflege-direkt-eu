@@ -1,0 +1,117 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Section from "../components/Section.astro";
+import { qualifikationen, nichtVermittelt, einsatzbereiche, arbeitszeitmodelle } from "../data/content";
+
+const icons: Record<string, string> = {
+  OP: "M12 3v3.4M12 17.6V21M3 12h3.4M17.6 12H21M5.6 5.6l2.4 2.4M16 16l2.4 2.4M5.6 18.4 8 16M16 8l2.4-2.4",
+  Anästhesie: "M12 2.5C12 2.5 5.5 11 5.5 15.2a6.5 6.5 0 0 0 13 0C18.5 11 12 2.5 12 2.5Z",
+  Intensivstation: "M2.5 12.5h4l1.8-5 3.4 10 1.8-5h4.5",
+  "Neo-Intensivstation": "M12 20.2s-8-4.6-8-10.4A4.7 4.7 0 0 1 12 6.9a4.7 4.7 0 0 1 8 2.9c0 5.8-8 10.4-8 10.4Z",
+  "Zentrale Notaufnahme": "M12 7.5v9M7.5 12h9",
+  Normalstation: "M2.8 18.5v-5.7a2 2 0 0 1 2-2h2.6a2 2 0 0 1 2 2v1.7h5.2v-1.7a2 2 0 0 1 2-2h2.6a2 2 0 0 1 2 2v5.7M2.8 18.5h18.4",
+};
+---
+
+<BaseLayout
+  title="Stelle finden"
+  description="Zielgruppe, Einsatzbereiche und Arbeitszeitmodelle für die Vermittlung von Pflegefachpersonen, OTA und ATA."
+>
+  <Section
+    eyebrow="Zielgruppe"
+    title="Wer vermittelt wird"
+    lead="Zielgruppe: ausschließlich ausgebildete Fachkräfte."
+  >
+    <div class="grid gap-6 md:grid-cols-2">
+      <div class="rounded-2xl border border-(--color-border) bg-(--color-surface-card) p-7">
+        <h3 class="text-base font-bold text-(--color-primary-700)">Gesucht</h3>
+        <ul class="mt-4 flex flex-col gap-2.5">
+          {
+            qualifikationen.map((item) => (
+              <li class="flex items-start gap-2.5 text-sm text-(--color-ink)">
+                <svg aria-hidden="true" viewBox="0 0 24 24" class="mt-0.5 h-4 w-4 shrink-0 text-(--color-primary-600)" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                  <path d="M5 12.5l4.5 4.5L19 7.5" />
+                </svg>
+                {item}
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+
+      <div class="rounded-2xl border border-(--color-border) bg-(--color-surface-card) p-7">
+        <h3 class="text-base font-bold text-(--color-ink-faint)">Nicht vermittelt</h3>
+        <ul class="mt-4 flex flex-col gap-2.5">
+          {
+            nichtVermittelt.map((item) => (
+              <li class="flex items-start gap-2.5 text-sm text-(--color-ink-faint)">
+                <svg aria-hidden="true" viewBox="0 0 24 24" class="mt-0.5 h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                  <path d="M6 6l12 12M18 6L6 18" />
+                </svg>
+                {item}
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </div>
+    <p class="mt-6 max-w-2xl text-sm text-(--color-ink-faint) italic">
+      Fachweiterbildungen sind ausdrücklich willkommen, insbesondere
+      Intensivpflege, Anästhesie, Notfallpflege, OP und pädiatrische
+      Fachbereiche.
+    </p>
+  </Section>
+
+  <Section
+    eyebrow="Stellenangebot"
+    title="Einsatzbereiche"
+    lead="Je nach Klinik und Qualifikation vermitteln wir in folgende Bereiche."
+    alt
+  >
+    <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {
+        einsatzbereiche.map((bereich) => (
+          <div class="rounded-2xl border border-(--color-border) bg-(--color-surface-card) p-6">
+            <div class="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-(--color-primary-50) text-(--color-primary-700)">
+              <svg aria-hidden="true" viewBox="0 0 24 24" class="h-5.5 w-5.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d={icons[bereich.name]} />
+              </svg>
+            </div>
+            <h3 class="text-base font-bold text-(--color-ink)">{bereich.name}</h3>
+            <p class="mt-1.5 text-sm text-(--color-ink-soft)">{bereich.beschreibung}</p>
+          </div>
+        ))
+      }
+    </div>
+  </Section>
+
+  <Section
+    eyebrow="Flexibilität"
+    title="Arbeitszeitmodelle"
+    lead="Je nach Klinik und konkreter Stelle können unterschiedliche Beschäftigungsmodelle vermittelt werden."
+  >
+    <div class="flex flex-wrap gap-3">
+      {
+        arbeitszeitmodelle.map((modell) => (
+          <span class="rounded-full border border-(--color-border-strong) bg-(--color-surface-card) px-5 py-2.5 text-sm font-medium text-(--color-ink)">
+            {modell}
+          </span>
+        ))
+      }
+    </div>
+    <p class="mt-6 max-w-2xl text-sm text-(--color-ink-faint) italic">
+      Die tatsächlich möglichen Arbeitszeitmodelle richten sich nach dem
+      jeweiligen Arbeitgeber und der ausgeschriebenen Stelle.
+    </p>
+
+    <div class="mt-12 rounded-2xl border border-dashed border-(--color-border-strong) bg-(--color-surface-alt) p-8 text-center">
+      <p class="font-serif text-xl font-semibold text-(--color-ink)">
+        Bewerbungsformular folgt in Kürze
+      </p>
+      <p class="mx-auto mt-2 max-w-md text-sm text-(--color-ink-soft)">
+        Der interaktive Bewerbungsfunnel mit Datenübermittlung und
+        Zeugnis-Upload wird in einer späteren Ausbaustufe ergänzt.
+      </p>
+    </div>
+  </Section>
+</BaseLayout>

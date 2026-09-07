@@ -1,0 +1,29 @@
+---
+import { faqEintraege } from "../data/content";
+---
+
+<div class="divide-y divide-(--color-border) border-t border-(--color-border)">
+  {
+    faqEintraege.map((entry) => (
+      <details class="group py-1">
+        <summary
+          class="flex cursor-pointer list-none items-center justify-between gap-4 py-4 text-base font-semibold text-(--color-ink) [&::-webkit-details-marker]:hidden"
+        >
+          {entry.frage}
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            class="h-5 w-5 shrink-0 text-(--color-ink-faint) transition-transform group-open:rotate-45"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+          >
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+        </summary>
+        <p class="max-w-2xl pb-5 text-sm leading-relaxed text-(--color-ink-soft)">{entry.antwort}</p>
+      </details>
+    ))
+  }
+</div>

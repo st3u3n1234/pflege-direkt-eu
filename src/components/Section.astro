@@ -1,0 +1,28 @@
+---
+interface Props {
+  eyebrow?: string;
+  title: string;
+  lead?: string;
+  alt?: boolean;
+  id?: string;
+}
+
+const { eyebrow, title, lead, alt = false, id } = Astro.props;
+---
+
+<section id={id} class:list={["py-16 md:py-24", alt && "bg-(--color-surface-alt)"]}>
+  <div class="mx-auto max-w-5xl px-6">
+    {eyebrow && (
+      <p class="mb-3 text-xs font-semibold tracking-wide text-(--color-primary-600) uppercase">
+        {eyebrow}
+      </p>
+    )}
+    <h2 class="max-w-2xl font-serif text-3xl font-semibold text-(--color-ink) md:text-4xl">
+      {title}
+    </h2>
+    {lead && <p class="mt-4 max-w-xl text-lg text-(--color-ink-soft)">{lead}</p>}
+    <div class="mt-10">
+      <slot />
+    </div>
+  </div>
+</section>

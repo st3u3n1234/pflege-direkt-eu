@@ -1,0 +1,48 @@
+---
+import { footerLegalLinks } from "../data/content";
+---
+
+<footer class="border-t border-(--color-border) bg-(--color-primary-900) text-(--color-surface)">
+  <div class="mx-auto grid max-w-5xl gap-10 px-6 py-14 md:grid-cols-3">
+    <div>
+      <a href="/" class="font-serif text-lg font-semibold text-white">PflegeDirekt</a>
+      <p class="mt-3 max-w-xs text-sm text-(--color-primary-100)">
+        Vermittlung für examinierte Pflegefachpersonen, OTA und ATA – direkt,
+        unkompliziert und kostenlos für Bewerberinnen und Bewerber.
+      </p>
+    </div>
+
+    <div>
+      <h2 class="text-xs font-semibold tracking-wide text-(--color-primary-200) uppercase">
+        Kontakt
+      </h2>
+      <p class="mt-4 text-sm text-(--color-primary-100)">
+        Für Rückfragen zu deiner Bewerbung nutze bitte das
+        <a href="/stelle-finden" class="font-semibold text-white underline underline-offset-2"
+          >Bewerbungsformular</a
+        >.
+      </p>
+    </div>
+
+    <div>
+      <h2 class="text-xs font-semibold tracking-wide text-(--color-primary-200) uppercase">
+        Rechtliches
+      </h2>
+      <ul class="mt-4 flex flex-col gap-2.5">
+        {
+          footerLegalLinks.map((item) => (
+            <li>
+              <a href={item.href} class="text-sm text-(--color-primary-100) hover:text-white">
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </div>
+
+  <div class="border-t border-white/10 px-6 py-5 text-xs text-(--color-primary-200)">
+    <div class="mx-auto max-w-5xl">Konzeptentwurf · Pflegefachpersonen / OTA / ATA</div>
+  </div>
+</footer>

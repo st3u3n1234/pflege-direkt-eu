@@ -1,0 +1,65 @@
+---
+import { navigation } from "../data/content";
+
+const currentPath = Astro.url.pathname;
+const isActive = (href: string) =>
+  href === "/" ? currentPath === "/" : currentPath.startsWith(href);
+---
+
+<header class="sticky top-0 z-40 border-b border-(--color-border) bg-(--color-surface)/90 backdrop-blur">
+  <div class="mx-auto flex max-w-5xl items-center gap-6 px-6 py-4">
+    <a href="/" class="font-serif text-lg font-semibold text-(--color-ink)">
+      PflegeDirekt
+    </a>
+
+    <nav aria-label="Hauptnavigation" class="ml-auto hidden md:flex md:items-center md:gap-8">
+      {
+        navigation.map((item) => (
+          <a
+            href={item.href}
+            class="text-sm font-medium text-(--color-ink-soft) hover:text-(--color-ink) aria-[current=page]:text-(--color-primary-700) aria-[current=page]:font-semibold"
+            aria-current={isActive(item.href) ? "page" : undefined}
+          >
+            {item.label}
+          </a>
+        ))
+      }
+    </nav>
+
+    <a
+      href="/stelle-finden"
+      class="ml-auto hidden shrink-0 rounded-full bg-(--color-primary-600) px-5 py-2.5 text-sm font-semibold text-white hover:bg-(--color-primary-700) md:ml-0 md:inline-flex"
+    >
+      Jetzt Stelle finden
+    </a>
+
+    <details class="group ml-auto md:hidden">
+      <summary
+        class="flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-full border border-(--color-border-strong) [&::-webkit-details-marker]:hidden"
+        aria-label="Menü öffnen"
+      >
+        <span class="sr-only">Menü öffnen</span>
+        <svg aria-hidden="true" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <path d="M4 7h16M4 12h16M4 17h16" />
+        </svg>
+      </summary>
+
+      <nav
+        aria-label="Hauptnavigation mobil"
+        class="absolute inset-x-0 top-full flex flex-col gap-1 border-b border-(--color-border) bg-(--color-surface) px-6 py-4 shadow-sm"
+      >
+        {
+          navigation.map((item) => (
+            <a
+              href={item.href}
+              class="rounded-md px-2 py-2.5 text-base font-medium text-(--color-ink-soft) hover:bg-(--color-surface-alt) aria-[current=page]:text-(--color-primary-700) aria-[current=page]:font-semibold"
+              aria-current={isActive(item.href) ? "page" : undefined}
+            >
+              {item.label}
+            </a>
+          ))
+        }
+      </nav>
+    </details>
+  </div>
+</header>

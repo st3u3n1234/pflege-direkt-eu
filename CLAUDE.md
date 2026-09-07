@@ -116,3 +116,16 @@ Tastaturbedienung, Screenreader-Ansage bei Schrittwechseln im Funnel.
 Klinik-Onboarding, Matching-Logik, Benachrichtigungswege, Domain und
 Aufbewahrungsfristen für Bewerberdaten sind bewusst offen gelassen und werden
 in Phase 0 per Interview geklärt → Ergebnis in `docs/SPEC.md`.
+
+## Lokale Entwicklung (Astro)
+
+Dev-Server im Hintergrund starten: `astro dev --background`. Verwalten mit
+`astro dev stop`, `astro dev status`, `astro dev logs`.
+
+Vor artverwandten Aufgaben die passende Astro-Doku konsultieren:
+- [Seiten, dynamische Routen, Middleware](https://docs.astro.build/en/guides/routing/)
+- [Astro-Komponenten](https://docs.astro.build/en/basics/astro-components/)
+- [React/Vue/Svelte-Komponenten](https://docs.astro.build/en/guides/framework-components/)
+- [Content Collections](https://docs.astro.build/en/guides/content-collections/)
+- [Styling / Tailwind](https://docs.astro.build/en/guides/styling/)
+- [Internationalisierung](https://docs.astro.build/en/guides/internationalization/)

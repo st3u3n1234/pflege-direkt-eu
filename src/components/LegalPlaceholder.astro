@@ -1,0 +1,17 @@
+---
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<section class="py-16 md:py-24">
+  <div class="mx-auto max-w-2xl px-6">
+    <h1 class="font-serif text-3xl font-semibold text-(--color-ink) md:text-4xl">{title}</h1>
+    <p class="mt-6 rounded-xl border border-dashed border-(--color-border-strong) bg-(--color-surface-alt) p-5 text-sm font-medium text-(--color-ink-faint)">
+      TODO: juristisch prüfen – dieser Text ist ein Platzhalter und noch kein
+      geprüfter Rechtstext.
+    </p>
+  </div>
+</section>

@@ -1,0 +1,115 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Section from "../components/Section.astro";
+
+const kernversprechen = [
+  "Kein unnötiger E-Mail-Verkehr",
+  "Keine mehrfachen Bewerbungen",
+  "Direkte Koordination mit dem Krankenhaus",
+  "Kostenlos für Bewerberinnen und Bewerber",
+];
+---
+
+<BaseLayout
+  title="Direkt zum Vorstellungsgespräch"
+  description="Vermittlung für examinierte Pflegefachpersonen, OTA und ATA – einmal Daten übermitteln, wir kümmern uns um die direkte Vermittlung."
+>
+  <section class="relative overflow-hidden">
+    <div
+      class="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_50%_at_20%_10%,theme(colors.primary.100),transparent_70%)] opacity-70"
+      aria-hidden="true"
+    >
+    </div>
+    <div class="relative mx-auto max-w-3xl px-6 py-20 md:py-28">
+      <p class="mb-4 text-xs font-semibold tracking-wide text-(--color-primary-600) uppercase">
+        Vermittlung für Pflegefachpersonen · OTA · ATA
+      </p>
+      <h1 class="font-serif text-4xl leading-tight font-semibold text-(--color-ink) md:text-6xl">
+        Dein neuer Job im Krankenhaus – ohne langen Bewerbungsprozess.
+      </h1>
+      <p class="mt-6 max-w-xl text-lg leading-relaxed text-(--color-ink-soft)">
+        Für examinierte Pflegefachpersonen, OTA und ATA. Einmal Daten und
+        Berufsabschluss übermitteln – wir kümmern uns um die direkte
+        Vermittlung und die schnellstmögliche Koordination deines
+        Vorstellungsgesprächs.
+      </p>
+
+      <div class="mt-8 flex flex-wrap items-center gap-4">
+        <a
+          href="/stelle-finden"
+          class="rounded-full bg-(--color-primary-600) px-7 py-3.5 text-base font-semibold text-white hover:bg-(--color-primary-700)"
+        >
+          Jetzt Stelle finden
+        </a>
+        <span class="text-sm text-(--color-ink-faint)">
+          Kostenlos & unverbindlich für Bewerberinnen und Bewerber
+        </span>
+      </div>
+
+      <ul class="mt-10 grid gap-3 sm:grid-cols-2">
+        {
+          kernversprechen.map((item) => (
+            <li class="flex items-start gap-2.5 text-sm text-(--color-ink-soft)">
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                class="mt-0.5 h-5 w-5 shrink-0 text-(--color-primary-600)"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M5 12.5l4.5 4.5L19 7.5" />
+              </svg>
+              {item}
+            </li>
+          ))
+        }
+      </ul>
+
+      <div
+        class="mt-10 inline-flex max-w-md items-center gap-4 rounded-2xl border border-(--color-accent-gold)/40 bg-(--color-accent-gold-soft) px-6 py-4"
+      >
+        <span class="font-serif text-2xl font-bold text-(--color-ink)">+400 €</span>
+        <span class="text-sm text-(--color-ink-soft)">
+          nach 3 Monaten – bei erfolgreicher Vermittlung, wenn das vermittelte
+          Arbeitsverhältnis weiterhin besteht.
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <Section
+    eyebrow="Zielgruppe"
+    title="Für examinierte Fachkräfte gemacht"
+    lead="Pflegefachfrau/-mann, Gesundheits- und (Kinder-)Krankenpfleger/in, Altenpfleger/in mit staatlicher Anerkennung, Pflegefachkräfte mit Fachweiterbildung, OTA und ATA."
+    alt
+  >
+    <a
+      href="/stelle-finden"
+      class="inline-flex items-center gap-2 text-sm font-semibold text-(--color-primary-700) hover:text-(--color-primary-800)"
+    >
+      Zielgruppe im Detail ansehen
+      <svg aria-hidden="true" viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M5 12h14M13 6l6 6-6 6" />
+      </svg>
+    </a>
+  </Section>
+
+  <Section
+    eyebrow="Ablauf"
+    title="Einmal abschicken. Wir kümmern uns um die Vermittlung."
+    lead="Vom Formular bis zum Vorstellungsgespräch – transparent und ohne doppelte Wege."
+  >
+    <a
+      href="/so-funktioniert-es"
+      class="inline-flex items-center gap-2 text-sm font-semibold text-(--color-primary-700) hover:text-(--color-primary-800)"
+    >
+      So funktioniert es
+      <svg aria-hidden="true" viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M5 12h14M13 6l6 6-6 6" />
+      </svg>
+    </a>
+  </Section>
+</BaseLayout>
