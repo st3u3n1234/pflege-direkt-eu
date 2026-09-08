@@ -114,6 +114,15 @@ Tastaturbedienung, Screenreader-Ansage bei Schrittwechseln im Funnel.
 - Kein Klartext-Secret im Client-Bundle. Service-Role-Key ausschließlich in
   Supabase, nie bei Netlify.
 
+## Live-Infrastruktur (Phase 4)
+
+- Git-Repo: `https://github.com/st3u3n1234/pflege-direkt-eu`
+- Netlify-Site: `pflege-direkt` → Live-URL `https://pflege-direkt.netlify.app`
+  (Produktion öffentlich, Deploy-Previews hinter Netlify-Team-SSO-Login)
+- Supabase-Projekt: `dnjdykrpbdhsvsyfzxxa` (Frankfurt/eu-central-1)
+- Netlify-Env-Vars: ausschließlich `PUBLIC_SUPABASE_URL` und
+  `PUBLIC_SUPABASE_ANON_KEY` — kein Service-Role-Key.
+
 ## Datenbankschema (Phase 2)
 
 Kanonisch in `supabase/migrations/` (Reihenfolge = Ausführungsreihenfolge).
