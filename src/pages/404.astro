@@ -1,0 +1,18 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Section from "../components/Section.astro";
+---
+
+<BaseLayout title="Seite nicht gefunden" description="Diese Seite existiert nicht (mehr).">
+  <Section eyebrow="404" title="Diese Seite gibt es nicht">
+    <p class="max-w-lg text-base leading-relaxed text-(--color-ink-soft)">
+      Der Link, dem du gefolgt bist, führt ins Leere. Vielleicht ist die
+      Seite umgezogen oder es hat sich ein Tippfehler eingeschlichen.
+    </p>
+    <div class="mt-8 flex flex-wrap gap-4 text-sm font-semibold">
+      <a href="/" class="text-(--color-primary-700) underline underline-offset-2">Zur Startseite</a>
+      <a href="/stelle-finden" class="text-(--color-primary-700) underline underline-offset-2">Stelle finden</a>
+      <a href="/faq" class="text-(--color-primary-700) underline underline-offset-2">Häufige Fragen</a>
+    </div>
+  </Section>
+</BaseLayout>

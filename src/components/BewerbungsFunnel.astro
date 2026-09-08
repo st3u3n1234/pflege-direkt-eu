@@ -21,7 +21,12 @@ const fieldInput =
 const fieldError = "field-error mt-1.5 text-sm font-medium text-red-700";
 ---
 
-<div id="bewerbungsfunnel" class="mx-auto max-w-2xl">
+<div
+  id="bewerbungsfunnel"
+  class="mx-auto max-w-2xl"
+  data-supabase-url={import.meta.env.PUBLIC_SUPABASE_URL}
+  data-supabase-anon-key={import.meta.env.PUBLIC_SUPABASE_ANON_KEY}
+>
   <div class="mb-8">
     <div
       role="progressbar"
@@ -31,7 +36,7 @@ const fieldError = "field-error mt-1.5 text-sm font-medium text-red-700";
       id="funnel-progress-bar"
       class="h-1.5 w-full overflow-hidden rounded-full bg-(--color-border)"
     >
-      <div id="funnel-progress-fill" class="h-full bg-(--color-primary-600) transition-all" style="width: 14.28%"></div>
+      <div id="funnel-progress-fill" class="h-full w-[14.2857%] bg-(--color-primary-600) transition-all"></div>
     </div>
     <p class="mt-2.5 text-xs font-semibold tracking-wide text-(--color-ink-faint) uppercase" id="funnel-step-label">
       Schritt 1 von 7
@@ -305,25 +310,14 @@ const fieldError = "field-error mt-1.5 text-sm font-medium text-red-700";
   </form>
 </div>
 
-<script is:inline define:vars={{
-  SUPABASE_URL: import.meta.env.PUBLIC_SUPABASE_URL,
-  SUPABASE_ANON_KEY: import.meta.env.PUBLIC_SUPABASE_ANON_KEY,
-}}>
-  window.__SUPABASE_CONFIG__ = { url: SUPABASE_URL, anonKey: SUPABASE_ANON_KEY };
-</script>
-
 <script>
-  interface SupabaseConfig {
-    url: string;
-    anonKey: string;
-  }
-  declare global {
-    interface Window {
-      __SUPABASE_CONFIG__: SupabaseConfig;
-    }
-  }
-
-  const { url: SUPABASE_URL, anonKey: SUPABASE_ANON_KEY } = window.__SUPABASE_CONFIG__;
+  // Supabase-URL/Anon-Key kommen als data-Attribute aus dem serverseitig
+  // gerenderten HTML (siehe #bewerbungsfunnel oben) statt aus einem Inline-
+  // Script — dadurch braucht die Content-Security-Policy kein
+  // `unsafe-inline` für script-src (Phase 4).
+  const funnelRoot = document.getElementById("bewerbungsfunnel") as HTMLElement;
+  const SUPABASE_URL = funnelRoot.dataset.supabaseUrl!;
+  const SUPABASE_ANON_KEY = funnelRoot.dataset.supabaseAnonKey!;
 
   const form = document.getElementById("bewerbung-form") as HTMLFormElement;
   const steps = Array.from(document.querySelectorAll<HTMLElement>(".funnel-step"));
