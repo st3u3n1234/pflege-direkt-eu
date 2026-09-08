@@ -1,6 +1,11 @@
 // Zentrale Inhalte aus dem Konzept-PDF (Website-Konzept_Pflegevermittlung.pdf).
-// Einzige Quelle für Enums/Listen, die auf mehreren Seiten und später im
-// Bewerbungsformular (Phase 3) wiederverwendet werden.
+//
+// Die Formular-/Datenbank-Enums (Qualifikation, Fachweiterbildung,
+// Einsatzbereich, Arbeitszeitmodell, Eintrittstermin) kommen NICHT von hier,
+// sondern aus supabase/functions/_shared/enums.json — das ist die einzige
+// kanonische Quelle, die sowohl Datenbank-Migration, Edge Function (Zod) als
+// auch dieses Frontend verwenden. Nicht hier duplizieren.
+import { enums } from "../../supabase/functions/bewerbung-einreichen/_shared/enums.ts";
 
 export interface NavItem {
   label: string;
@@ -21,7 +26,10 @@ export const footerLegalLinks: NavItem[] = [
   { label: "Bonusbedingungen", href: "/bonusbedingungen" },
 ];
 
-export const qualifikationen = [
+// Zielgruppen-Darstellung auf der Marketing-Seite (Konzept Abschnitt 2) —
+// bewusst ausführlicher formuliert als die knappen Enum-Werte im Formular
+// (z. B. "mit staatlicher Anerkennung", eigene Fachweiterbildungs-Zeile).
+export const zielgruppeGesucht = [
   "Pflegefachfrau / Pflegefachmann",
   "Gesundheits- und Krankenpfleger/in",
   "Gesundheits- und Kinderkrankenpfleger/in",
@@ -40,14 +48,9 @@ export const nichtVermittelt = [
   "Sonstige nicht examinierte Assistenzberufe",
 ] as const;
 
-export const fachweiterbildungen = [
-  "Nein",
-  "Intensivpflege",
-  "Anästhesie",
-  "Notfallpflege",
-  "OP",
-  "Sonstige Fachweiterbildung",
-] as const;
+// Tatsächliche Formular-/Enum-Werte (Konzept Abschnitt 7 + Datenbankschema).
+export const qualifikationOptionen = enums.qualifikation;
+export const fachweiterbildungen = enums.fachweiterbildung;
 
 export interface Einsatzbereich {
   name: string;
@@ -63,20 +66,8 @@ export const einsatzbereiche: Einsatzbereich[] = [
   { name: "Normalstation", beschreibung: "Stationäre Pflege in unterschiedlichen Fachrichtungen." },
 ];
 
-export const arbeitszeitmodelle = [
-  "Vollzeit",
-  "Teilzeit",
-  "Nebenjob",
-  "Minijob",
-  "Individuelle Wochenstunden",
-] as const;
-
-export const eintrittstermine = [
-  "Sofort",
-  "Innerhalb von 4 Wochen",
-  "In 1-3 Monaten",
-  "Später",
-] as const;
+export const arbeitszeitmodelle = enums.arbeitszeitmodell;
+export const eintrittstermine = enums.eintrittstermin;
 
 export interface FunnelStep {
   nummer: number;

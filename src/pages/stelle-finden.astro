@@ -1,7 +1,7 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import Section from "../components/Section.astro";
-import { qualifikationen, nichtVermittelt, einsatzbereiche, arbeitszeitmodelle } from "../data/content";
+import { zielgruppeGesucht, nichtVermittelt, einsatzbereiche, arbeitszeitmodelle } from "../data/content";
 
 const icons: Record<string, string> = {
   OP: "M12 3v3.4M12 17.6V21M3 12h3.4M17.6 12H21M5.6 5.6l2.4 2.4M16 16l2.4 2.4M5.6 18.4 8 16M16 8l2.4-2.4",
@@ -27,7 +27,7 @@ const icons: Record<string, string> = {
         <h3 class="text-base font-bold text-(--color-primary-700)">Gesucht</h3>
         <ul class="mt-4 flex flex-col gap-2.5">
           {
-            qualifikationen.map((item) => (
+            zielgruppeGesucht.map((item) => (
               <li class="flex items-start gap-2.5 text-sm text-(--color-ink)">
                 <svg aria-hidden="true" viewBox="0 0 24 24" class="mt-0.5 h-4 w-4 shrink-0 text-(--color-primary-600)" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
                   <path d="M5 12.5l4.5 4.5L19 7.5" />

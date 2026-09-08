@@ -50,7 +50,10 @@ das nie als feste Zusage formulieren.
 
 ## Formular / Datenmodell (aus Konzept Abschnitt 6–7)
 
-Persönliche Daten: Vorname, Nachname, Adresse, E-Mail, Telefonnummer.
+Persönliche Daten: Vorname, Nachname, Straße/Hausnummer, PLZ (exakt 5
+Ziffern), Ort, E-Mail, Telefonnummer. (In Phase 2 aus dem ursprünglich
+einzelnen "Adresse"-Feld präzisiert, weil die PLZ-Constraint ein eigenes
+Feld braucht — inhaltlich keine Änderung des Konzepts.)
 
 Berufliche Angaben:
 - Qualifikation: Pflegefachfrau/-mann, Gesundheits- und Krankenpfleger/in,
@@ -110,6 +113,30 @@ Tastaturbedienung, Screenreader-Ansage bei Schrittwechseln im Funnel.
 - Hosting: Netlify, Produktion nur von `main`, Deploy Previews für Branches
 - Kein Klartext-Secret im Client-Bundle. Service-Role-Key ausschließlich in
   Supabase, nie bei Netlify.
+
+## Datenbankschema (Phase 2)
+
+Kanonisch in `supabase/migrations/` (Reihenfolge = Ausführungsreihenfolge).
+Wichtigste Tabellen: `bewerbungen` (ein Datensatz pro Bewerbung, inkl.
+`status`-Enum für die manuelle Team-Pipeline aus `docs/SPEC.md` und
+`klinik_id` für die spätere manuelle Zuordnung), `kliniken` (minimal, kein
+Self-Service), `bewerbung_rate_limits` (kurzlebiges IP-Hash-Log fürs
+Rate-Limiting, kein Klartext). RLS ist auf allen dreien aktiv, bewusst ohne
+Policy für `anon`/`authenticated` — einziger Schreib-/Lesezugriff ist die
+Edge Function `supabase/functions/bewerbung-einreichen` über den
+Service-Role-Key.
+
+Die Formular-/Datenbank-Enums (Qualifikation, Fachweiterbildung,
+Einsatzbereich, Arbeitszeitmodell, Eintrittstermin) leben kanonisch in
+`supabase/functions/bewerbung-einreichen/_shared/enums.ts` — sowohl die Zod-
+Validierung der Edge Function als auch `src/data/content.ts` (Frontend)
+importieren von dort. Bei einer Änderung: zuerst diese Datei anpassen, dann
+per neuer Migration die Postgres-Enums nachziehen.
+
+Zeugnis-Upload läuft nie durch die Edge Function selbst, sondern über eine
+von ihr erzeugte signierte Storage-Upload-URL (Pfadschema
+`bewerbungen/{bewerbung_id}/zeugnis`) — das Frontend lädt direkt zu Storage
+hoch.
 
 ## Nicht Teil dieses Dokuments
 
