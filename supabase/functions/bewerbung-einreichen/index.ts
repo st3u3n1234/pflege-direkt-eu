@@ -19,6 +19,7 @@ import { enums } from "./_shared/enums.ts";
 const RATE_LIMIT_MAX_PRO_STUNDE = 5;
 const RATE_LIMIT_FENSTER_MS = 60 * 60 * 1000;
 const RATE_LIMIT_LOG_TTL_MS = 24 * 60 * 60 * 1000;
+const MIN_VERSTRICHENE_ZEIT_MS = 4000;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -56,6 +57,11 @@ const BewerbungSchema = z
     datenschutz_zugestimmt: z.literal(true, {
       errorMap: () => ({ message: "Zustimmung zur Datenschutzerklärung ist erforderlich" }),
     }),
+    // Anti-Bot, kein Captcha (siehe CLAUDE.md / docs/SPEC.md): honeypot muss
+    // für Menschen unsichtbar und leer bleiben; verstrichene_zeit_ms misst
+    // clientseitig die Zeit seit dem Laden des Formulars.
+    honeypot: z.string().optional().default(""),
+    verstrichene_zeit_ms: z.number().optional().default(0),
   })
   .refine(
     (data) =>
@@ -107,6 +113,20 @@ Deno.serve(async (req: Request) => {
     });
   }
 
+  const daten = parsed.data;
+
+  // Anti-Bot: honeypot gefüllt oder Formular unrealistisch schnell
+  // abgeschickt. Kein Fehler, keine echten Daten — eine plausibel
+  // aussehende Erfolgsantwort, damit einfache Bot-Skripte nicht merken,
+  // dass sie erkannt wurden, ohne dass ein Datensatz oder eine echte
+  // Signed-URL entsteht.
+  if (daten.honeypot.length > 0 || daten.verstrichene_zeit_ms < MIN_VERSTRICHENE_ZEIT_MS) {
+    return jsonResponse(201, {
+      bewerbungId: crypto.randomUUID(),
+      upload: { path: "", token: "", signedUrl: "" },
+    });
+  }
+
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
@@ -141,7 +161,6 @@ Deno.serve(async (req: Request) => {
 
   await supabaseAdmin.from("bewerbung_rate_limits").insert({ ip_hash: ipHash });
 
-  const daten = parsed.data;
   const { data: bewerbung, error: insertError } = await supabaseAdmin
     .from("bewerbungen")
     .insert({

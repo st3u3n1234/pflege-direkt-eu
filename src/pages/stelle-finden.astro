@@ -1,6 +1,7 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import Section from "../components/Section.astro";
+import BewerbungsFunnel from "../components/BewerbungsFunnel.astro";
 import { zielgruppeGesucht, nichtVermittelt, einsatzbereiche, arbeitszeitmodelle } from "../data/content";
 
 const icons: Record<string, string> = {
@@ -104,14 +105,9 @@ const icons: Record<string, string> = {
       jeweiligen Arbeitgeber und der ausgeschriebenen Stelle.
     </p>
 
-    <div class="mt-12 rounded-2xl border border-dashed border-(--color-border-strong) bg-(--color-surface-alt) p-8 text-center">
-      <p class="font-serif text-xl font-semibold text-(--color-ink)">
-        Bewerbungsformular folgt in Kürze
-      </p>
-      <p class="mx-auto mt-2 max-w-md text-sm text-(--color-ink-soft)">
-        Der interaktive Bewerbungsfunnel mit Datenübermittlung und
-        Zeugnis-Upload wird in einer späteren Ausbaustufe ergänzt.
-      </p>
-    </div>
+  </Section>
+
+  <Section eyebrow="Bewerbung" title="Jetzt bewerben" lead="Sieben kurze Schritte, keine Mehrfachbewerbung." alt>
+    <BewerbungsFunnel />
   </Section>
 </BaseLayout>

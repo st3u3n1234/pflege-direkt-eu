@@ -1,0 +1,36 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Section from "../components/Section.astro";
+---
+
+<BaseLayout
+  title="Bewerbung eingegangen"
+  description="Deine Bewerbung ist bei uns eingegangen. So geht es jetzt weiter."
+>
+  <Section eyebrow="Bestätigung" title="Deine Bewerbung ist eingegangen">
+    <div class="max-w-xl space-y-4 text-base leading-relaxed text-(--color-ink-soft)">
+      <p>
+        Danke für deine Bewerbung! Wir gleichen deine Angaben jetzt mit den
+        Anforderungen passender Kliniken ab.
+      </p>
+      <p>
+        Wenn die Voraussetzungen erfüllt sind, stellen wir den direkten
+        Kontakt her und koordinieren dein Vorstellungsgespräch so schnell wie
+        möglich – je nach Verfügbarkeit der Klinik auch am Folgetag. Eine
+        Garantie auf einen Termin oder eine Einstellung können wir dir nicht
+        geben; die Entscheidung darüber trifft am Ende die Klinik.
+      </p>
+      <p>
+        Du musst jetzt nichts weiter tun. Sobald es Neuigkeiten zu deiner
+        Bewerbung gibt, melden wir uns bei dir.
+      </p>
+    </div>
+
+    <a
+      href="/"
+      class="mt-8 inline-flex items-center gap-2 text-sm font-semibold text-(--color-primary-700) hover:text-(--color-primary-800)"
+    >
+      Zurück zur Startseite
+    </a>
+  </Section>
+</BaseLayout>

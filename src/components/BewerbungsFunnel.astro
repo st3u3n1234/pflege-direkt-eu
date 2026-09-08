@@ -1,0 +1,646 @@
+---
+// Mehrstufiger Bewerbungsfunnel. Einzige Stelle der Seite mit JavaScript
+// (siehe CLAUDE.md). Alle Felder aller Schritte liegen von Anfang an im DOM
+// (nur versteckt) — dadurch bleibt der Zustand beim Schrittwechsel ohne
+// zusätzliche Verwaltung erhalten, und es wird kein Web-Storage gebraucht.
+import {
+  qualifikationAuswahl,
+  fachweiterbildungen,
+  einsatzbereiche,
+  arbeitszeitmodelle,
+  eintrittstermine,
+} from "../data/content";
+
+const optionCard =
+  "group relative flex cursor-pointer items-start gap-3 rounded-xl border border-(--color-border-strong) bg-(--color-surface-card) px-4 py-3.5 text-sm font-medium text-(--color-ink) transition has-[:checked]:border-(--color-primary-600) has-[:checked]:bg-(--color-primary-50) has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-(--color-accent-gold) has-[:focus-visible]:ring-offset-2";
+const optionDot =
+  "mt-0.5 flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full border border-(--color-border-strong) group-has-[:checked]:border-(--color-primary-600) group-has-[:checked]:bg-(--color-primary-600)";
+const fieldLabel = "text-sm font-medium text-(--color-ink)";
+const fieldInput =
+  "mt-1.5 w-full rounded-lg border border-(--color-border-strong) bg-(--color-surface-card) px-3.5 py-2.5 text-sm text-(--color-ink) outline-none focus-visible:border-(--color-primary-600) focus-visible:ring-2 focus-visible:ring-(--color-accent-gold) aria-[invalid=true]:border-red-600";
+const fieldError = "field-error mt-1.5 text-sm font-medium text-red-700";
+---
+
+<div id="bewerbungsfunnel" class="mx-auto max-w-2xl">
+  <div class="mb-8">
+    <div
+      role="progressbar"
+      aria-valuemin="1"
+      aria-valuemax="7"
+      aria-valuenow="1"
+      id="funnel-progress-bar"
+      class="h-1.5 w-full overflow-hidden rounded-full bg-(--color-border)"
+    >
+      <div id="funnel-progress-fill" class="h-full bg-(--color-primary-600) transition-all" style="width: 14.28%"></div>
+    </div>
+    <p class="mt-2.5 text-xs font-semibold tracking-wide text-(--color-ink-faint) uppercase" id="funnel-step-label">
+      Schritt 1 von 7
+    </p>
+  </div>
+
+  <div aria-live="polite" class="sr-only" id="funnel-live-region"></div>
+
+  <form id="bewerbung-form" novalidate>
+    <!-- Honeypot: für Menschen unsichtbar, für Bots wie ein normales Feld erreichbar -->
+    <div class="absolute -left-[9999px]" aria-hidden="true">
+      <label for="website">Bitte leer lassen</label>
+      <input type="text" id="website" name="website" tabindex="-1" autocomplete="off" />
+    </div>
+
+    <!-- Schritt 1: Qualifikation -->
+    <section class="funnel-step" data-step="1">
+      <h3 id="step-1-heading" tabindex="-1" class="font-serif text-2xl font-semibold text-(--color-ink)">
+        Welche Qualifikation hast du?
+      </h3>
+      <div class="mt-6 grid gap-3 sm:grid-cols-2" role="radiogroup" aria-labelledby="step-1-heading">
+        {
+          qualifikationAuswahl.map((opt) => (
+            <label class={optionCard}>
+              <input
+                type="radio"
+                name="qualifikation"
+                value={opt.label}
+                data-vermittelbar={String(opt.vermittelbar)}
+                class="sr-only"
+                required
+              />
+              <span class={optionDot} aria-hidden="true" />
+              <span>{opt.label}</span>
+            </label>
+          ))
+        }
+      </div>
+      <p class={fieldError} data-error-for="qualifikation" role="alert" />
+
+      <div
+        id="nicht-vermittelbar-hinweis"
+        hidden
+        class="mt-6 rounded-2xl border border-(--color-border) bg-(--color-surface-alt) p-6"
+      >
+        <p class="font-semibold text-(--color-ink)">Diese Berufsgruppe vermitteln wir aktuell nicht</p>
+        <p class="mt-2 text-sm text-(--color-ink-soft)">
+          Der Vermittlungsservice richtet sich ausschließlich an examinierte Pflegefachpersonen, OTA
+          und ATA. Für deine gewählte Berufsgruppe können wir aktuell leider keine Vermittlung anbieten.
+        </p>
+        <div class="mt-4 flex gap-4 text-sm font-semibold">
+          <a href="/" class="text-(--color-primary-700) underline underline-offset-2">Zur Startseite</a>
+          <a href="/faq" class="text-(--color-primary-700) underline underline-offset-2">Häufige Fragen</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Schritt 2: Fachweiterbildung -->
+    <section class="funnel-step" data-step="2" hidden>
+      <h3 id="step-2-heading" tabindex="-1" class="font-serif text-2xl font-semibold text-(--color-ink)">
+        Hast du eine Fachweiterbildung?
+      </h3>
+      <div class="mt-6 grid gap-3 sm:grid-cols-2" role="radiogroup" aria-labelledby="step-2-heading">
+        {
+          fachweiterbildungen.map((opt) => (
+            <label class={optionCard}>
+              <input type="radio" name="fachweiterbildung" value={opt} class="sr-only" required />
+              <span class={optionDot} aria-hidden="true" />
+              <span>{opt}</span>
+            </label>
+          ))
+        }
+      </div>
+      <p class={fieldError} data-error-for="fachweiterbildung" role="alert" />
+    </section>
+
+    <!-- Schritt 3: Einsatzbereich -->
+    <section class="funnel-step" data-step="3" hidden>
+      <h3 id="step-3-heading" tabindex="-1" class="font-serif text-2xl font-semibold text-(--color-ink)">
+        Wo möchtest du arbeiten?
+      </h3>
+      <div class="mt-6 grid gap-3 sm:grid-cols-2" role="radiogroup" aria-labelledby="step-3-heading">
+        {
+          einsatzbereiche.map((bereich) => (
+            <label class={optionCard}>
+              <input type="radio" name="einsatzbereich" value={bereich.name} class="sr-only" required />
+              <span class={optionDot} aria-hidden="true" />
+              <span>{bereich.name}</span>
+            </label>
+          ))
+        }
+      </div>
+      <p class={fieldError} data-error-for="einsatzbereich" role="alert" />
+    </section>
+
+    <!-- Schritt 4: Arbeitsmodell -->
+    <section class="funnel-step" data-step="4" hidden>
+      <h3 id="step-4-heading" tabindex="-1" class="font-serif text-2xl font-semibold text-(--color-ink)">
+        Welches Arbeitsmodell suchst du?
+      </h3>
+      <div class="mt-6 grid gap-3 sm:grid-cols-2" role="radiogroup" aria-labelledby="step-4-heading">
+        {
+          arbeitszeitmodelle.map((opt) => (
+            <label class={optionCard}>
+              <input type="radio" name="arbeitszeitmodell" value={opt} class="sr-only" required />
+              <span class={optionDot} aria-hidden="true" />
+              <span>{opt}</span>
+            </label>
+          ))
+        }
+      </div>
+      <p class={fieldError} data-error-for="arbeitszeitmodell" role="alert" />
+
+      <div id="wochenstunden-wrap" hidden class="mt-5 max-w-xs">
+        <label for="wochenstunden" class={fieldLabel}>Wie viele Stunden pro Woche?</label>
+        <input type="number" id="wochenstunden" name="wochenstunden" min="1" max="48" class={fieldInput} />
+        <p class={fieldError} data-error-for="wochenstunden" role="alert" />
+      </div>
+    </section>
+
+    <!-- Schritt 5: Eintrittstermin -->
+    <section class="funnel-step" data-step="5" hidden>
+      <h3 id="step-5-heading" tabindex="-1" class="font-serif text-2xl font-semibold text-(--color-ink)">
+        Wann könntest du anfangen?
+      </h3>
+      <div class="mt-6 grid gap-3 sm:grid-cols-2" role="radiogroup" aria-labelledby="step-5-heading">
+        {
+          eintrittstermine.map((opt) => (
+            <label class={optionCard}>
+              <input type="radio" name="eintrittstermin" value={opt} class="sr-only" required />
+              <span class={optionDot} aria-hidden="true" />
+              <span>{opt}</span>
+            </label>
+          ))
+        }
+      </div>
+      <p class={fieldError} data-error-for="eintrittstermin" role="alert" />
+    </section>
+
+    <!-- Schritt 6: Persönliche Daten -->
+    <section class="funnel-step" data-step="6" hidden>
+      <h3 id="step-6-heading" tabindex="-1" class="font-serif text-2xl font-semibold text-(--color-ink)">
+        Deine Kontaktdaten
+      </h3>
+      <div class="mt-6 grid gap-5 sm:grid-cols-2">
+        <div>
+          <label for="vorname" class={fieldLabel}>Vorname</label>
+          <input id="vorname" name="vorname" autocomplete="given-name" class={fieldInput} required />
+          <p class={fieldError} data-error-for="vorname" role="alert" />
+        </div>
+        <div>
+          <label for="nachname" class={fieldLabel}>Nachname</label>
+          <input id="nachname" name="nachname" autocomplete="family-name" class={fieldInput} required />
+          <p class={fieldError} data-error-for="nachname" role="alert" />
+        </div>
+        <div class="sm:col-span-2">
+          <label for="strasse" class={fieldLabel}>Straße und Hausnummer</label>
+          <input id="strasse" name="strasse" autocomplete="street-address" class={fieldInput} required />
+          <p class={fieldError} data-error-for="strasse" role="alert" />
+        </div>
+        <div>
+          <label for="plz" class={fieldLabel}>PLZ</label>
+          <input
+            id="plz"
+            name="plz"
+            inputmode="numeric"
+            pattern="[0-9]{5}"
+            maxlength="5"
+            autocomplete="postal-code"
+            class={fieldInput}
+            required
+          />
+          <p class={fieldError} data-error-for="plz" role="alert" />
+        </div>
+        <div>
+          <label for="ort" class={fieldLabel}>Ort</label>
+          <input id="ort" name="ort" autocomplete="address-level2" class={fieldInput} required />
+          <p class={fieldError} data-error-for="ort" role="alert" />
+        </div>
+        <div>
+          <label for="email" class={fieldLabel}>E-Mail-Adresse</label>
+          <input type="email" id="email" name="email" autocomplete="email" class={fieldInput} required />
+          <p class={fieldError} data-error-for="email" role="alert" />
+        </div>
+        <div>
+          <label for="telefon" class={fieldLabel}>Telefonnummer</label>
+          <input type="tel" id="telefon" name="telefon" autocomplete="tel" class={fieldInput} required />
+          <p class={fieldError} data-error-for="telefon" role="alert" />
+        </div>
+        <div class="sm:col-span-2">
+          <label for="arbeitsort_region" class={fieldLabel}>Gewünschter Arbeitsort / Region</label>
+          <input id="arbeitsort_region" name="arbeitsort_region" class={fieldInput} required />
+          <p class={fieldError} data-error-for="arbeitsort_region" role="alert" />
+        </div>
+      </div>
+
+      <div class="mt-6 flex items-start gap-3 rounded-xl border border-(--color-border) bg-(--color-surface-alt) p-4">
+        <input
+          type="checkbox"
+          id="datenschutz_zugestimmt"
+          name="datenschutz_zugestimmt"
+          class="mt-1 h-4.5 w-4.5 shrink-0 rounded border-(--color-border-strong)"
+          required
+        />
+        <label for="datenschutz_zugestimmt" class="text-sm text-(--color-ink-soft)">
+          Ich habe die <a href="/datenschutz" class="font-semibold text-(--color-primary-700) underline underline-offset-2">Datenschutzerklärung</a> zur
+          Kenntnis genommen. Meine Angaben werden ausschließlich zum Zweck der
+          Stellenvermittlung verarbeitet.
+        </label>
+      </div>
+      <p class={fieldError} data-error-for="datenschutz_zugestimmt" role="alert" />
+    </section>
+
+    <!-- Schritt 7: Zeugnis-Upload -->
+    <section class="funnel-step" data-step="7" hidden>
+      <h3 id="step-7-heading" tabindex="-1" class="font-serif text-2xl font-semibold text-(--color-ink)">
+        Abschlussnachweis hochladen
+      </h3>
+      <p class="mt-2 text-sm text-(--color-ink-soft)">
+        Zeugnis bzw. Nachweis über den abgeschlossenen Berufsabschluss. Erlaubt: PDF, JPEG oder PNG,
+        maximal 10 MB.
+      </p>
+      <div class="mt-5">
+        <label for="zeugnis" class={fieldLabel}>Datei auswählen</label>
+        <input
+          type="file"
+          id="zeugnis"
+          name="zeugnis"
+          accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+          class="mt-1.5 block w-full text-sm text-(--color-ink-soft) file:mr-4 file:rounded-lg file:border-0 file:bg-(--color-primary-600) file:px-4 file:py-2.5 file:text-sm file:font-semibold file:text-white hover:file:bg-(--color-primary-700)"
+        />
+        <p id="datei-info" class="mt-2 text-sm text-(--color-ink-soft)" />
+        <p class={fieldError} data-error-for="zeugnis" role="alert" />
+      </div>
+
+      <div id="upload-progress-wrap" hidden class="mt-5">
+        <div class="h-2 w-full overflow-hidden rounded-full bg-(--color-border)">
+          <div id="upload-progress-bar" class="h-full w-0 bg-(--color-primary-600) transition-all"></div>
+        </div>
+        <p class="mt-1.5 text-xs text-(--color-ink-faint)">Zeugnis wird hochgeladen …</p>
+      </div>
+    </section>
+
+    <div class="mt-10 flex items-center justify-between gap-4">
+      <button
+        type="button"
+        id="funnel-back"
+        hidden
+        class="rounded-full border border-(--color-border-strong) px-6 py-2.5 text-sm font-semibold text-(--color-ink) hover:bg-(--color-surface-alt)"
+      >
+        Zurück
+      </button>
+      <div class="ml-auto flex gap-3">
+        <button
+          type="button"
+          id="funnel-next"
+          class="rounded-full bg-(--color-primary-600) px-6 py-2.5 text-sm font-semibold text-white hover:bg-(--color-primary-700)"
+        >
+          Weiter
+        </button>
+        <button
+          type="submit"
+          id="funnel-submit"
+          hidden
+          class="rounded-full bg-(--color-primary-600) px-6 py-2.5 text-sm font-semibold text-white hover:bg-(--color-primary-700) disabled:opacity-60"
+        >
+          Bewerbung absenden
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<script is:inline define:vars={{
+  SUPABASE_URL: import.meta.env.PUBLIC_SUPABASE_URL,
+  SUPABASE_ANON_KEY: import.meta.env.PUBLIC_SUPABASE_ANON_KEY,
+}}>
+  window.__SUPABASE_CONFIG__ = { url: SUPABASE_URL, anonKey: SUPABASE_ANON_KEY };
+</script>
+
+<script>
+  interface SupabaseConfig {
+    url: string;
+    anonKey: string;
+  }
+  declare global {
+    interface Window {
+      __SUPABASE_CONFIG__: SupabaseConfig;
+    }
+  }
+
+  const { url: SUPABASE_URL, anonKey: SUPABASE_ANON_KEY } = window.__SUPABASE_CONFIG__;
+
+  const form = document.getElementById("bewerbung-form") as HTMLFormElement;
+  const steps = Array.from(document.querySelectorAll<HTMLElement>(".funnel-step"));
+  const totalSteps = steps.length;
+  let currentStep = 1;
+  const formLoadedAt = Date.now();
+
+  const backBtn = document.getElementById("funnel-back") as HTMLButtonElement;
+  const nextBtn = document.getElementById("funnel-next") as HTMLButtonElement;
+  const submitBtn = document.getElementById("funnel-submit") as HTMLButtonElement;
+  const progressFill = document.getElementById("funnel-progress-fill") as HTMLElement;
+  const progressBar = document.getElementById("funnel-progress-bar") as HTMLElement;
+  const stepLabel = document.getElementById("funnel-step-label") as HTMLElement;
+  const liveRegion = document.getElementById("funnel-live-region") as HTMLElement;
+  const nichtVermittelbarHinweis = document.getElementById("nicht-vermittelbar-hinweis") as HTMLElement;
+  const fileInput = document.getElementById("zeugnis") as HTMLInputElement;
+  const dateiInfo = document.getElementById("datei-info") as HTMLElement;
+
+  const stepTitles: Record<number, string> = {
+    1: "Qualifikation",
+    2: "Fachweiterbildung",
+    3: "Einsatzbereich",
+    4: "Arbeitsmodell",
+    5: "Eintrittstermin",
+    6: "Persönliche Daten",
+    7: "Zeugnis-Upload",
+  };
+
+  function showStep(n: number): void {
+    steps.forEach((s) => {
+      s.hidden = Number(s.dataset.step) !== n;
+    });
+    currentStep = n;
+    const pct = (n / totalSteps) * 100;
+    progressFill.style.width = `${pct}%`;
+    progressBar.setAttribute("aria-valuenow", String(n));
+    const label = `Schritt ${n} von ${totalSteps}: ${stepTitles[n]}`;
+    stepLabel.textContent = label;
+    liveRegion.textContent = label;
+    backBtn.hidden = n === 1;
+    nextBtn.hidden = n === totalSteps;
+    submitBtn.hidden = n !== totalSteps;
+    steps[n - 1].querySelector<HTMLElement>("h3")?.focus();
+  }
+
+  function clearErrors(step: HTMLElement): void {
+    step.querySelectorAll<HTMLElement>("[data-error-for]").forEach((el) => {
+      el.textContent = "";
+    });
+    step.querySelectorAll<HTMLElement>('[aria-invalid="true"]').forEach((el) => {
+      el.removeAttribute("aria-invalid");
+    });
+  }
+
+  function setError(step: HTMLElement, fieldName: string, message: string): HTMLElement | null {
+    const errorEl = step.querySelector<HTMLElement>(`[data-error-for="${fieldName}"]`);
+    if (errorEl) errorEl.textContent = message;
+    const field = step.querySelector<HTMLElement>(`[name="${fieldName}"]`);
+    field?.setAttribute("aria-invalid", "true");
+    return field;
+  }
+
+  function validateStep(n: number): boolean {
+    const step = steps[n - 1];
+    clearErrors(step);
+    let firstInvalid: HTMLElement | null = null;
+
+    const singleChoice = (name: string, message: string): HTMLInputElement | null => {
+      const selected = step.querySelector<HTMLInputElement>(`input[name="${name}"]:checked`);
+      if (!selected) {
+        firstInvalid = firstInvalid ?? setError(step, name, message);
+      }
+      return selected;
+    };
+
+    if (n === 1) {
+      const selected = singleChoice("qualifikation", "Bitte wähle eine Qualifikation aus.");
+      if (selected?.dataset.vermittelbar === "false") {
+        nichtVermittelbarHinweis.hidden = false;
+        return false;
+      }
+      nichtVermittelbarHinweis.hidden = true;
+    }
+    if (n === 2) singleChoice("fachweiterbildung", "Bitte wähle eine Option.");
+    if (n === 3) singleChoice("einsatzbereich", "Bitte wähle einen Einsatzbereich.");
+    if (n === 4) {
+      const selected = singleChoice("arbeitszeitmodell", "Bitte wähle ein Arbeitszeitmodell.");
+      if (selected?.value === "Individuelle Wochenstunden") {
+        const input = document.getElementById("wochenstunden") as HTMLInputElement;
+        const val = Number(input.value);
+        if (!input.value || val < 1 || val > 48) {
+          firstInvalid = firstInvalid ?? setError(step, "wochenstunden", "Bitte gib einen Wert zwischen 1 und 48 an.");
+        }
+      }
+    }
+    if (n === 5) singleChoice("eintrittstermin", "Bitte wähle einen Zeitpunkt.");
+    if (n === 6) {
+      const requiredText = ["vorname", "nachname", "strasse", "plz", "ort", "email", "telefon", "arbeitsort_region"];
+      for (const name of requiredText) {
+        const input = step.querySelector<HTMLInputElement>(`[name="${name}"]`)!;
+        if (!input.value.trim()) {
+          firstInvalid = firstInvalid ?? setError(step, name, "Pflichtfeld.");
+        }
+      }
+      const plz = step.querySelector<HTMLInputElement>('[name="plz"]')!;
+      if (plz.value && !/^[0-9]{5}$/.test(plz.value)) {
+        firstInvalid = firstInvalid ?? setError(step, "plz", "PLZ muss aus genau 5 Ziffern bestehen.");
+      }
+      const email = step.querySelector<HTMLInputElement>('[name="email"]')!;
+      if (email.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
+        firstInvalid = firstInvalid ?? setError(step, "email", "Bitte gib eine gültige E-Mail-Adresse an.");
+      }
+      const checkbox = step.querySelector<HTMLInputElement>('[name="datenschutz_zugestimmt"]')!;
+      if (!checkbox.checked) {
+        firstInvalid = firstInvalid ?? setError(step, "datenschutz_zugestimmt", "Bitte bestätige die Datenschutzerklärung.");
+      }
+    }
+
+    if (firstInvalid) {
+      firstInvalid.focus();
+      return false;
+    }
+    return true;
+  }
+
+  nextBtn.addEventListener("click", () => {
+    if (validateStep(currentStep)) {
+      showStep(currentStep + 1);
+    }
+  });
+
+  backBtn.addEventListener("click", () => {
+    showStep(currentStep - 1);
+  });
+
+  document.querySelectorAll<HTMLInputElement>('input[name="qualifikation"]').forEach((el) => {
+    el.addEventListener("change", () => validateStep(1));
+  });
+
+  document.querySelectorAll<HTMLInputElement>('input[name="arbeitszeitmodell"]').forEach((el) => {
+    el.addEventListener("change", () => {
+      const wrap = document.getElementById("wochenstunden-wrap") as HTMLElement;
+      wrap.hidden = el.value !== "Individuelle Wochenstunden";
+    });
+  });
+
+  const ALLOWED_TYPES = ["application/pdf", "image/jpeg", "image/png"];
+  const MAX_SIZE_BYTES = 10 * 1024 * 1024;
+
+  fileInput.addEventListener("change", () => {
+    const step7 = steps[6];
+    clearErrors(step7);
+    dateiInfo.textContent = "";
+    const file = fileInput.files?.[0];
+    if (!file) return;
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      setError(step7, "zeugnis", "Bitte nur PDF, JPEG oder PNG hochladen.");
+      fileInput.value = "";
+      return;
+    }
+    if (file.size > MAX_SIZE_BYTES) {
+      setError(step7, "zeugnis", "Die Datei darf maximal 10 MB groß sein.");
+      fileInput.value = "";
+      return;
+    }
+    dateiInfo.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(1)} MB)`;
+  });
+
+  interface UploadInfo {
+    path: string;
+    token: string;
+    signedUrl: string;
+  }
+
+  let cachedUploadInfo: UploadInfo | null = null;
+
+  const fieldToStep: Record<string, number> = {
+    qualifikation: 1,
+    fachweiterbildung: 2,
+    einsatzbereich: 3,
+    arbeitszeitmodell: 4,
+    wochenstunden: 4,
+    eintrittstermin: 5,
+    vorname: 6,
+    nachname: 6,
+    strasse: 6,
+    plz: 6,
+    ort: 6,
+    email: 6,
+    telefon: 6,
+    arbeitsort_region: 6,
+    datenschutz_zugestimmt: 6,
+  };
+
+  function showFieldErrorsFromServer(details: Record<string, string[]> | undefined): void {
+    if (!details) return;
+    const fields = Object.keys(details);
+    if (fields.length === 0) return;
+    const firstStep = fieldToStep[fields[0]] ?? 6;
+    showStep(firstStep);
+    for (const field of fields) {
+      const message = details[field]?.[0];
+      const step = steps[(fieldToStep[field] ?? 6) - 1];
+      if (message) setError(step, field, message);
+    }
+  }
+
+  function uploadWithProgress(url: string, file: File): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("PUT", url);
+      xhr.setRequestHeader("Content-Type", file.type);
+      const wrap = document.getElementById("upload-progress-wrap") as HTMLElement;
+      const bar = document.getElementById("upload-progress-bar") as HTMLElement;
+      wrap.hidden = false;
+      xhr.upload.addEventListener("progress", (ev) => {
+        if (ev.lengthComputable) {
+          bar.style.width = `${Math.round((ev.loaded / ev.total) * 100)}%`;
+        }
+      });
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) resolve();
+        else reject(new Error("Upload fehlgeschlagen"));
+      };
+      xhr.onerror = () => reject(new Error("Netzwerkfehler beim Upload"));
+      xhr.send(file);
+    });
+  }
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const step7 = steps[6];
+    clearErrors(step7);
+
+    const file = fileInput.files?.[0];
+    if (!file) {
+      setError(step7, "zeugnis", "Bitte lade deinen Abschlussnachweis hoch.")?.focus();
+      return;
+    }
+
+    submitBtn.disabled = true;
+    const originalLabel = submitBtn.textContent;
+    submitBtn.textContent = "Wird gesendet …";
+
+    try {
+      if (!cachedUploadInfo) {
+        const formData = new FormData(form);
+        const arbeitszeitmodell = String(formData.get("arbeitszeitmodell"));
+        const payload = {
+          vorname: formData.get("vorname"),
+          nachname: formData.get("nachname"),
+          strasse: formData.get("strasse"),
+          plz: formData.get("plz"),
+          ort: formData.get("ort"),
+          email: formData.get("email"),
+          telefon: formData.get("telefon"),
+          qualifikation: formData.get("qualifikation"),
+          fachweiterbildung: formData.get("fachweiterbildung") || "Nein",
+          einsatzbereich: formData.get("einsatzbereich"),
+          arbeitszeitmodell,
+          wochenstunden:
+            arbeitszeitmodell === "Individuelle Wochenstunden" ? Number(formData.get("wochenstunden")) : undefined,
+          arbeitsort_region: formData.get("arbeitsort_region"),
+          eintrittstermin: formData.get("eintrittstermin"),
+          datenschutz_zugestimmt: formData.get("datenschutz_zugestimmt") === "on",
+          honeypot: formData.get("website") || "",
+          verstrichene_zeit_ms: Date.now() - formLoadedAt,
+        };
+
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/bewerbung-einreichen`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
+          body: JSON.stringify(payload),
+        });
+
+        if (response.status === 422) {
+          const body = await response.json();
+          showFieldErrorsFromServer(body.details);
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalLabel;
+          return;
+        }
+        if (response.status === 429) {
+          setError(step7, "zeugnis", "Zu viele Bewerbungen von dieser Verbindung. Bitte versuche es später erneut.");
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalLabel;
+          return;
+        }
+        if (!response.ok) {
+          throw new Error("Serverfehler");
+        }
+        const body = await response.json();
+        cachedUploadInfo = body.upload as UploadInfo;
+      }
+
+      if (!cachedUploadInfo?.signedUrl) {
+        // Anti-Bot-Zweig der Edge Function (siehe dortiger Kommentar): keine
+        // echte Upload-URL vorhanden. Für den Aufrufer sieht es dennoch wie
+        // ein normaler Erfolg aus.
+        window.location.href = "/bewerbung-erfolgreich";
+        return;
+      }
+
+      await uploadWithProgress(cachedUploadInfo.signedUrl, file);
+      window.location.href = "/bewerbung-erfolgreich";
+    } catch {
+      setError(
+        step7,
+        "zeugnis",
+        cachedUploadInfo
+          ? "Der Upload ist fehlgeschlagen. Bitte versuche es erneut."
+          : "Beim Absenden ist ein Fehler aufgetreten. Bitte versuche es erneut.",
+      );
+      submitBtn.disabled = false;
+      submitBtn.textContent = cachedUploadInfo ? "Upload erneut versuchen" : originalLabel;
+    }
+  });
+
+  showStep(1);
+</script>

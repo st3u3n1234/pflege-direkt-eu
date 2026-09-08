@@ -52,6 +52,20 @@ export const nichtVermittelt = [
 export const qualifikationOptionen = enums.qualifikation;
 export const fachweiterbildungen = enums.fachweiterbildung;
 
+export interface QualifikationOption {
+  label: string;
+  vermittelbar: boolean;
+}
+
+// Auswahlliste für Schritt 1 des Bewerbungsfunnels: zeigt bewusst auch nicht
+// vermittelbare Berufsbezeichnungen, damit Betroffene sofort ein
+// verständliches Feedback bekommen statt sich zu fragen, warum ihre
+// Berufsbezeichnung fehlt.
+export const qualifikationAuswahl: QualifikationOption[] = [
+  ...qualifikationOptionen.map((label) => ({ label, vermittelbar: true })),
+  ...nichtVermittelt.map((label) => ({ label, vermittelbar: false })),
+];
+
 export interface Einsatzbereich {
   name: string;
   beschreibung: string;
