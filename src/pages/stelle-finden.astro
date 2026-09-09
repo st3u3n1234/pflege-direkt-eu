@@ -107,7 +107,19 @@ const icons: Record<string, string> = {
 
   </Section>
 
-  <Section eyebrow="Bewerbung" title="Jetzt bewerben" lead="Sieben kurze Schritte, keine Mehrfachbewerbung." alt>
+  <div class="mx-auto max-w-5xl px-6">
+    <div class="relative h-48 overflow-hidden rounded-2xl sm:h-64">
+      <img
+        src="/images/op-handschuhe.jpg"
+        alt="Person zieht sterile OP-Handschuhe an"
+        loading="lazy"
+        class="h-full w-full object-cover"
+      />
+      <div class="absolute inset-0 bg-(--color-primary-900)/15" aria-hidden="true"></div>
+    </div>
+  </div>
+
+  <Section eyebrow="Bewerbung" title="Jetzt bewerben" lead="Acht kurze Schritte, keine Mehrfachbewerbung." alt>
     <BewerbungsFunnel />
   </Section>
 </BaseLayout>

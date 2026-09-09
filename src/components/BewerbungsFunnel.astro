@@ -5,6 +5,7 @@
 // zusätzliche Verwaltung erhalten, und es wird kein Web-Storage gebraucht.
 import {
   qualifikationAuswahl,
+  qualifikationAnzeige,
   fachweiterbildungen,
   einsatzbereiche,
   arbeitszeitmodelle,
@@ -19,6 +20,8 @@ const fieldLabel = "text-sm font-medium text-(--color-ink)";
 const fieldInput =
   "mt-1.5 w-full rounded-lg border border-(--color-border-strong) bg-(--color-surface-card) px-3.5 py-2.5 text-sm text-(--color-ink) outline-none focus-visible:border-(--color-primary-600) focus-visible:ring-2 focus-visible:ring-(--color-accent-gold) aria-[invalid=true]:border-red-600";
 const fieldError = "field-error mt-1.5 text-sm font-medium text-red-700";
+
+const TOTAL_STEPS = 8;
 ---
 
 <div
@@ -31,15 +34,15 @@ const fieldError = "field-error mt-1.5 text-sm font-medium text-red-700";
     <div
       role="progressbar"
       aria-valuemin="1"
-      aria-valuemax="7"
+      aria-valuemax={TOTAL_STEPS}
       aria-valuenow="1"
       id="funnel-progress-bar"
       class="h-1.5 w-full overflow-hidden rounded-full bg-(--color-border)"
     >
-      <div id="funnel-progress-fill" class="h-full w-[14.2857%] bg-(--color-primary-600) transition-all"></div>
+      <div id="funnel-progress-fill" class="h-full w-[12.5%] bg-(--color-primary-600) transition-all"></div>
     </div>
     <p class="mt-2.5 text-xs font-semibold tracking-wide text-(--color-ink-faint) uppercase" id="funnel-step-label">
-      Schritt 1 von 7
+      Schritt 1 von {TOTAL_STEPS}
     </p>
   </div>
 
@@ -51,6 +54,7 @@ const fieldError = "field-error mt-1.5 text-sm font-medium text-red-700";
       <label for="website">Bitte leer lassen</label>
       <input type="text" id="website" name="website" tabindex="-1" autocomplete="off" />
     </div>
+    <input type="hidden" id="klinik_id" name="klinik_id" value="" />
 
     <!-- Schritt 1: Qualifikation -->
     <section class="funnel-step" data-step="1">
@@ -70,7 +74,11 @@ const fieldError = "field-error mt-1.5 text-sm font-medium text-red-700";
                 required
               />
               <span class={optionDot} aria-hidden="true" />
-              <span>{opt.label}</span>
+              <span>
+                {opt.vermittelbar
+                  ? qualifikationAnzeige[opt.label as keyof typeof qualifikationAnzeige] ?? opt.label
+                  : opt.label}
+              </span>
             </label>
           ))
         }
@@ -94,12 +102,70 @@ const fieldError = "field-error mt-1.5 text-sm font-medium text-red-700";
       </div>
     </section>
 
-    <!-- Schritt 2: Fachweiterbildung -->
+    <!-- Schritt 2: Einsatzbereich (dynamisch gefiltert nach Qualifikation) -->
     <section class="funnel-step" data-step="2" hidden>
       <h3 id="step-2-heading" tabindex="-1" class="font-serif text-2xl font-semibold text-(--color-ink)">
+        Wo möchtest du arbeiten?
+      </h3>
+      <p class="mt-2 text-sm text-(--color-ink-soft)">
+        Angezeigt werden nur Bereiche, die für deine Qualifikation berufsrechtlich zulässig sind.
+      </p>
+      <div class="mt-6 grid gap-3 sm:grid-cols-2" role="radiogroup" aria-labelledby="step-2-heading">
+        {
+          einsatzbereiche.map((bereich) => (
+            <label class={optionCard} data-bereich-option={bereich.name}>
+              <input type="radio" name="einsatzbereich" value={bereich.name} class="sr-only" required />
+              <span class={optionDot} aria-hidden="true" />
+              <span>
+                {bereich.name}
+                <span class="market-note ml-1.5 text-xs font-normal text-(--color-ink-faint)" hidden>
+                  (in der Praxis selten ausgeschrieben)
+                </span>
+              </span>
+            </label>
+          ))
+        }
+      </div>
+      <p class={fieldError} data-error-for="einsatzbereich" role="alert" />
+    </section>
+
+    <!-- Schritt 3: Verfügbarkeit (neu, Phase 5) -->
+    <section class="funnel-step" data-step="3" hidden>
+      <h3 id="step-3-heading" tabindex="-1" class="font-serif text-2xl font-semibold text-(--color-ink)">
+        Wo gibt es passende offene Stellen?
+      </h3>
+      <p class="mt-2 max-w-lg rounded-xl border border-dashed border-(--color-border-strong) bg-(--color-surface-alt) p-3 text-xs text-(--color-ink-faint)">
+        Diese Übersicht zeigt aktuell Beispiel-/Testdaten zur Demonstration, keine echten offenen
+        Stellen.
+      </p>
+
+      <div id="verfuegbarkeit-loading" class="mt-6 text-sm text-(--color-ink-soft)">Wird geladen …</div>
+
+      <div id="verfuegbarkeit-ergebnisse" hidden class="mt-6 grid gap-3 sm:grid-cols-2" role="radiogroup" aria-labelledby="step-3-heading" />
+
+      <div id="verfuegbarkeit-leer" hidden class="mt-6 rounded-2xl border border-(--color-border) bg-(--color-surface-alt) p-6">
+        <p class="font-semibold text-(--color-ink)">
+          Für diese Kombination ist aktuell keine offene Stelle hinterlegt
+        </p>
+        <p class="mt-2 text-sm text-(--color-ink-soft)">
+          Du kannst dich trotzdem allgemein bewerben — wir gleichen deine Angaben zusätzlich manuell mit
+          weiteren Kliniken ab.
+        </p>
+      </div>
+
+      <label class={`${optionCard} mt-4 sm:max-w-xs`}>
+        <input type="radio" name="klinik_auswahl" value="allgemein" class="sr-only" checked />
+        <span class={optionDot} aria-hidden="true" />
+        <span>Keine bestimmte Klinik – allgemein bewerben</span>
+      </label>
+    </section>
+
+    <!-- Schritt 4: Fachweiterbildung -->
+    <section class="funnel-step" data-step="4" hidden>
+      <h3 id="step-4-heading" tabindex="-1" class="font-serif text-2xl font-semibold text-(--color-ink)">
         Hast du eine Fachweiterbildung?
       </h3>
-      <div class="mt-6 grid gap-3 sm:grid-cols-2" role="radiogroup" aria-labelledby="step-2-heading">
+      <div class="mt-6 grid gap-3 sm:grid-cols-2" role="radiogroup" aria-labelledby="step-4-heading">
         {
           fachweiterbildungen.map((opt) => (
             <label class={optionCard}>
@@ -113,31 +179,12 @@ const fieldError = "field-error mt-1.5 text-sm font-medium text-red-700";
       <p class={fieldError} data-error-for="fachweiterbildung" role="alert" />
     </section>
 
-    <!-- Schritt 3: Einsatzbereich -->
-    <section class="funnel-step" data-step="3" hidden>
-      <h3 id="step-3-heading" tabindex="-1" class="font-serif text-2xl font-semibold text-(--color-ink)">
-        Wo möchtest du arbeiten?
-      </h3>
-      <div class="mt-6 grid gap-3 sm:grid-cols-2" role="radiogroup" aria-labelledby="step-3-heading">
-        {
-          einsatzbereiche.map((bereich) => (
-            <label class={optionCard}>
-              <input type="radio" name="einsatzbereich" value={bereich.name} class="sr-only" required />
-              <span class={optionDot} aria-hidden="true" />
-              <span>{bereich.name}</span>
-            </label>
-          ))
-        }
-      </div>
-      <p class={fieldError} data-error-for="einsatzbereich" role="alert" />
-    </section>
-
-    <!-- Schritt 4: Arbeitsmodell -->
-    <section class="funnel-step" data-step="4" hidden>
-      <h3 id="step-4-heading" tabindex="-1" class="font-serif text-2xl font-semibold text-(--color-ink)">
+    <!-- Schritt 5: Arbeitsmodell -->
+    <section class="funnel-step" data-step="5" hidden>
+      <h3 id="step-5-heading" tabindex="-1" class="font-serif text-2xl font-semibold text-(--color-ink)">
         Welches Arbeitsmodell suchst du?
       </h3>
-      <div class="mt-6 grid gap-3 sm:grid-cols-2" role="radiogroup" aria-labelledby="step-4-heading">
+      <div class="mt-6 grid gap-3 sm:grid-cols-2" role="radiogroup" aria-labelledby="step-5-heading">
         {
           arbeitszeitmodelle.map((opt) => (
             <label class={optionCard}>
@@ -157,12 +204,12 @@ const fieldError = "field-error mt-1.5 text-sm font-medium text-red-700";
       </div>
     </section>
 
-    <!-- Schritt 5: Eintrittstermin -->
-    <section class="funnel-step" data-step="5" hidden>
-      <h3 id="step-5-heading" tabindex="-1" class="font-serif text-2xl font-semibold text-(--color-ink)">
+    <!-- Schritt 6: Eintrittstermin -->
+    <section class="funnel-step" data-step="6" hidden>
+      <h3 id="step-6-heading" tabindex="-1" class="font-serif text-2xl font-semibold text-(--color-ink)">
         Wann könntest du anfangen?
       </h3>
-      <div class="mt-6 grid gap-3 sm:grid-cols-2" role="radiogroup" aria-labelledby="step-5-heading">
+      <div class="mt-6 grid gap-3 sm:grid-cols-2" role="radiogroup" aria-labelledby="step-6-heading">
         {
           eintrittstermine.map((opt) => (
             <label class={optionCard}>
@@ -176,9 +223,9 @@ const fieldError = "field-error mt-1.5 text-sm font-medium text-red-700";
       <p class={fieldError} data-error-for="eintrittstermin" role="alert" />
     </section>
 
-    <!-- Schritt 6: Persönliche Daten -->
-    <section class="funnel-step" data-step="6" hidden>
-      <h3 id="step-6-heading" tabindex="-1" class="font-serif text-2xl font-semibold text-(--color-ink)">
+    <!-- Schritt 7: Persönliche Daten -->
+    <section class="funnel-step" data-step="7" hidden>
+      <h3 id="step-7-heading" tabindex="-1" class="font-serif text-2xl font-semibold text-(--color-ink)">
         Deine Kontaktdaten
       </h3>
       <div class="mt-6 grid gap-5 sm:grid-cols-2">
@@ -250,9 +297,9 @@ const fieldError = "field-error mt-1.5 text-sm font-medium text-red-700";
       <p class={fieldError} data-error-for="datenschutz_zugestimmt" role="alert" />
     </section>
 
-    <!-- Schritt 7: Zeugnis-Upload -->
-    <section class="funnel-step" data-step="7" hidden>
-      <h3 id="step-7-heading" tabindex="-1" class="font-serif text-2xl font-semibold text-(--color-ink)">
+    <!-- Schritt 8: Zeugnis-Upload -->
+    <section class="funnel-step" data-step="8" hidden>
+      <h3 id="step-8-heading" tabindex="-1" class="font-serif text-2xl font-semibold text-(--color-ink)">
         Abschlussnachweis hochladen
       </h3>
       <p class="mt-2 text-sm text-(--color-ink-soft)">
@@ -311,6 +358,8 @@ const fieldError = "field-error mt-1.5 text-sm font-medium text-red-700";
 </div>
 
 <script>
+  import { berufBereichMatrix } from "../data/content";
+
   // Supabase-URL/Anon-Key kommen als data-Attribute aus dem serverseitig
   // gerenderten HTML (siehe #bewerbungsfunnel oben) statt aus einem Inline-
   // Script — dadurch braucht die Content-Security-Policy kein
@@ -335,15 +384,17 @@ const fieldError = "field-error mt-1.5 text-sm font-medium text-red-700";
   const nichtVermittelbarHinweis = document.getElementById("nicht-vermittelbar-hinweis") as HTMLElement;
   const fileInput = document.getElementById("zeugnis") as HTMLInputElement;
   const dateiInfo = document.getElementById("datei-info") as HTMLElement;
+  const klinikIdInput = document.getElementById("klinik_id") as HTMLInputElement;
 
   const stepTitles: Record<number, string> = {
     1: "Qualifikation",
-    2: "Fachweiterbildung",
-    3: "Einsatzbereich",
-    4: "Arbeitsmodell",
-    5: "Eintrittstermin",
-    6: "Persönliche Daten",
-    7: "Zeugnis-Upload",
+    2: "Einsatzbereich",
+    3: "Verfügbarkeit",
+    4: "Fachweiterbildung",
+    5: "Arbeitsmodell",
+    6: "Eintrittstermin",
+    7: "Persönliche Daten",
+    8: "Zeugnis-Upload",
   };
 
   function showStep(n: number): void {
@@ -380,6 +431,90 @@ const fieldError = "field-error mt-1.5 text-sm font-medium text-red-700";
     return field;
   }
 
+  // --- Schritt 2: Einsatzbereich dynamisch nach Beruf filtern ---
+  function updateEinsatzbereichOptionen(): void {
+    const quali = document.querySelector<HTMLInputElement>('input[name="qualifikation"]:checked')?.value;
+    const eintrag = quali ? berufBereichMatrix[quali as keyof typeof berufBereichMatrix] : undefined;
+    const step2 = steps[1];
+    const optionen = step2.querySelectorAll<HTMLElement>("[data-bereich-option]");
+    let selectedStillValid = false;
+
+    optionen.forEach((label) => {
+      const bereich = label.dataset.bereichOption!;
+      const input = label.querySelector<HTMLInputElement>("input[name='einsatzbereich']")!;
+      const note = label.querySelector<HTMLElement>(".market-note")!;
+
+      if (!eintrag) {
+        label.hidden = false;
+        note.hidden = true;
+        return;
+      }
+
+      const erlaubt = eintrag.rechtlichZulaessig.includes(bereich);
+      label.hidden = !erlaubt;
+      note.hidden = !erlaubt || eintrag.marktgaengig.includes(bereich);
+
+      if (erlaubt && input.checked) selectedStillValid = true;
+      if (!erlaubt && input.checked) input.checked = false;
+    });
+
+    void selectedStillValid;
+  }
+
+  // --- Schritt 3: Verfügbarkeit laden ---
+  async function ladeVerfuegbarkeit(): Promise<void> {
+    const quali = document.querySelector<HTMLInputElement>('input[name="qualifikation"]:checked')?.value;
+    const bereich = document.querySelector<HTMLInputElement>('input[name="einsatzbereich"]:checked')?.value;
+    const loading = document.getElementById("verfuegbarkeit-loading") as HTMLElement;
+    const ergebnisse = document.getElementById("verfuegbarkeit-ergebnisse") as HTMLElement;
+    const leer = document.getElementById("verfuegbarkeit-leer") as HTMLElement;
+
+    loading.hidden = false;
+    ergebnisse.hidden = true;
+    leer.hidden = true;
+    ergebnisse.innerHTML = "";
+    klinikIdInput.value = "";
+
+    try {
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/stellen-verfuegbarkeit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
+        body: JSON.stringify({ qualifikation: quali, einsatzbereich: bereich }),
+      });
+      const body = await response.json();
+      const kliniken: { klinikId: string; name: string; region: string | null }[] = body.kliniken ?? [];
+
+      loading.hidden = true;
+      if (kliniken.length === 0) {
+        leer.hidden = false;
+        return;
+      }
+
+      ergebnisse.hidden = false;
+      for (const klinik of kliniken) {
+        const label = document.createElement("label");
+        label.className =
+          "group relative flex cursor-pointer items-start gap-3 rounded-xl border border-(--color-border-strong) bg-(--color-surface-card) px-4 py-3.5 text-sm font-medium text-(--color-ink) transition has-[:checked]:border-(--color-primary-600) has-[:checked]:bg-(--color-primary-50)";
+        label.innerHTML = `
+          <input type="radio" name="klinik_auswahl" value="${klinik.klinikId}" class="sr-only" />
+          <span class="mt-0.5 flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full border border-(--color-border-strong) group-has-[:checked]:border-(--color-primary-600) group-has-[:checked]:bg-(--color-primary-600)" aria-hidden="true"></span>
+          <span>${klinik.name}${klinik.region ? ` · ${klinik.region}` : ""}</span>
+        `;
+        ergebnisse.appendChild(label);
+      }
+    } catch {
+      loading.hidden = true;
+      leer.hidden = false;
+    }
+  }
+
+  document.addEventListener("change", (event) => {
+    const target = event.target as HTMLInputElement;
+    if (target?.name === "klinik_auswahl") {
+      klinikIdInput.value = target.value === "allgemein" ? "" : target.value;
+    }
+  });
+
   function validateStep(n: number): boolean {
     const step = steps[n - 1];
     clearErrors(step);
@@ -401,9 +536,9 @@ const fieldError = "field-error mt-1.5 text-sm font-medium text-red-700";
       }
       nichtVermittelbarHinweis.hidden = true;
     }
-    if (n === 2) singleChoice("fachweiterbildung", "Bitte wähle eine Option.");
-    if (n === 3) singleChoice("einsatzbereich", "Bitte wähle einen Einsatzbereich.");
-    if (n === 4) {
+    if (n === 2) singleChoice("einsatzbereich", "Bitte wähle einen Einsatzbereich.");
+    if (n === 4) singleChoice("fachweiterbildung", "Bitte wähle eine Option.");
+    if (n === 5) {
       const selected = singleChoice("arbeitszeitmodell", "Bitte wähle ein Arbeitszeitmodell.");
       if (selected?.value === "Individuelle Wochenstunden") {
         const input = document.getElementById("wochenstunden") as HTMLInputElement;
@@ -413,8 +548,8 @@ const fieldError = "field-error mt-1.5 text-sm font-medium text-red-700";
         }
       }
     }
-    if (n === 5) singleChoice("eintrittstermin", "Bitte wähle einen Zeitpunkt.");
-    if (n === 6) {
+    if (n === 6) singleChoice("eintrittstermin", "Bitte wähle einen Zeitpunkt.");
+    if (n === 7) {
       const requiredText = ["vorname", "nachname", "strasse", "plz", "ort", "email", "telefon", "arbeitsort_region"];
       for (const name of requiredText) {
         const input = step.querySelector<HTMLInputElement>(`[name="${name}"]`)!;
@@ -444,9 +579,10 @@ const fieldError = "field-error mt-1.5 text-sm font-medium text-red-700";
   }
 
   nextBtn.addEventListener("click", () => {
-    if (validateStep(currentStep)) {
-      showStep(currentStep + 1);
-    }
+    if (!validateStep(currentStep)) return;
+    const next = currentStep + 1;
+    showStep(next);
+    if (next === 3) void ladeVerfuegbarkeit();
   });
 
   backBtn.addEventListener("click", () => {
@@ -454,7 +590,10 @@ const fieldError = "field-error mt-1.5 text-sm font-medium text-red-700";
   });
 
   document.querySelectorAll<HTMLInputElement>('input[name="qualifikation"]').forEach((el) => {
-    el.addEventListener("change", () => validateStep(1));
+    el.addEventListener("change", () => {
+      validateStep(1);
+      updateEinsatzbereichOptionen();
+    });
   });
 
   document.querySelectorAll<HTMLInputElement>('input[name="arbeitszeitmodell"]').forEach((el) => {
@@ -468,18 +607,18 @@ const fieldError = "field-error mt-1.5 text-sm font-medium text-red-700";
   const MAX_SIZE_BYTES = 10 * 1024 * 1024;
 
   fileInput.addEventListener("change", () => {
-    const step7 = steps[6];
-    clearErrors(step7);
+    const uploadStep = steps[totalSteps - 1];
+    clearErrors(uploadStep);
     dateiInfo.textContent = "";
     const file = fileInput.files?.[0];
     if (!file) return;
     if (!ALLOWED_TYPES.includes(file.type)) {
-      setError(step7, "zeugnis", "Bitte nur PDF, JPEG oder PNG hochladen.");
+      setError(uploadStep, "zeugnis", "Bitte nur PDF, JPEG oder PNG hochladen.");
       fileInput.value = "";
       return;
     }
     if (file.size > MAX_SIZE_BYTES) {
-      setError(step7, "zeugnis", "Die Datei darf maximal 10 MB groß sein.");
+      setError(uploadStep, "zeugnis", "Die Datei darf maximal 10 MB groß sein.");
       fileInput.value = "";
       return;
     }
@@ -496,31 +635,31 @@ const fieldError = "field-error mt-1.5 text-sm font-medium text-red-700";
 
   const fieldToStep: Record<string, number> = {
     qualifikation: 1,
-    fachweiterbildung: 2,
-    einsatzbereich: 3,
-    arbeitszeitmodell: 4,
-    wochenstunden: 4,
-    eintrittstermin: 5,
-    vorname: 6,
-    nachname: 6,
-    strasse: 6,
-    plz: 6,
-    ort: 6,
-    email: 6,
-    telefon: 6,
-    arbeitsort_region: 6,
-    datenschutz_zugestimmt: 6,
+    einsatzbereich: 2,
+    fachweiterbildung: 4,
+    arbeitszeitmodell: 5,
+    wochenstunden: 5,
+    eintrittstermin: 6,
+    vorname: 7,
+    nachname: 7,
+    strasse: 7,
+    plz: 7,
+    ort: 7,
+    email: 7,
+    telefon: 7,
+    arbeitsort_region: 7,
+    datenschutz_zugestimmt: 7,
   };
 
   function showFieldErrorsFromServer(details: Record<string, string[]> | undefined): void {
     if (!details) return;
     const fields = Object.keys(details);
     if (fields.length === 0) return;
-    const firstStep = fieldToStep[fields[0]] ?? 6;
+    const firstStep = fieldToStep[fields[0]] ?? 7;
     showStep(firstStep);
     for (const field of fields) {
       const message = details[field]?.[0];
-      const step = steps[(fieldToStep[field] ?? 6) - 1];
+      const step = steps[(fieldToStep[field] ?? 7) - 1];
       if (message) setError(step, field, message);
     }
   }
@@ -549,12 +688,12 @@ const fieldError = "field-error mt-1.5 text-sm font-medium text-red-700";
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
-    const step7 = steps[6];
-    clearErrors(step7);
+    const uploadStep = steps[totalSteps - 1];
+    clearErrors(uploadStep);
 
     const file = fileInput.files?.[0];
     if (!file) {
-      setError(step7, "zeugnis", "Bitte lade deinen Abschlussnachweis hoch.")?.focus();
+      setError(uploadStep, "zeugnis", "Bitte lade deinen Abschlussnachweis hoch.")?.focus();
       return;
     }
 
@@ -585,6 +724,7 @@ const fieldError = "field-error mt-1.5 text-sm font-medium text-red-700";
           datenschutz_zugestimmt: formData.get("datenschutz_zugestimmt") === "on",
           honeypot: formData.get("website") || "",
           verstrichene_zeit_ms: Date.now() - formLoadedAt,
+          klinik_id: klinikIdInput.value || undefined,
         };
 
         const response = await fetch(`${SUPABASE_URL}/functions/v1/bewerbung-einreichen`, {
@@ -601,7 +741,7 @@ const fieldError = "field-error mt-1.5 text-sm font-medium text-red-700";
           return;
         }
         if (response.status === 429) {
-          setError(step7, "zeugnis", "Zu viele Bewerbungen von dieser Verbindung. Bitte versuche es später erneut.");
+          setError(uploadStep, "zeugnis", "Zu viele Bewerbungen von dieser Verbindung. Bitte versuche es später erneut.");
           submitBtn.disabled = false;
           submitBtn.textContent = originalLabel;
           return;
@@ -625,7 +765,7 @@ const fieldError = "field-error mt-1.5 text-sm font-medium text-red-700";
       window.location.href = "/bewerbung-erfolgreich";
     } catch {
       setError(
-        step7,
+        uploadStep,
         "zeugnis",
         cachedUploadInfo
           ? "Der Upload ist fehlgeschlagen. Bitte versuche es erneut."

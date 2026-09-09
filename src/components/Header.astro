@@ -8,8 +8,12 @@ const isActive = (href: string) =>
 
 <header class="sticky top-0 z-40 border-b border-(--color-border) bg-(--color-surface)/90 backdrop-blur">
   <div class="mx-auto flex max-w-5xl items-center gap-6 px-6 py-4">
-    <a href="/" class="font-serif text-lg font-semibold text-(--color-ink)">
-      PflegeDirekt
+    <a href="/" class="flex items-center gap-2.5">
+      <img src="/logo-symplymedical.png" alt="" width="32" height="32" class="h-8 w-8" />
+      <span class="flex flex-col leading-tight">
+        <span class="font-serif text-lg font-semibold text-(--color-ink)">SymplyMedical</span>
+        <span class="hidden text-[11px] text-(--color-ink-faint) sm:block">Service für medizinische Laufbahnen</span>
+      </span>
     </a>
 
     <nav aria-label="Hauptnavigation" class="ml-auto hidden md:flex md:items-center md:gap-8">

@@ -62,6 +62,10 @@ const BewerbungSchema = z
     // clientseitig die Zeit seit dem Laden des Formulars.
     honeypot: z.string().optional().default(""),
     verstrichene_zeit_ms: z.number().optional().default(0),
+    // Optional: gesetzt, wenn der Bewerber im Verfügbarkeits-Schritt (Phase 5)
+    // eine konkrete (Test-)Klinik ausgewählt hat, statt nur allgemein zu
+    // bewerben.
+    klinik_id: z.string().uuid().optional(),
   })
   .refine(
     (data) =>
@@ -178,6 +182,7 @@ Deno.serve(async (req: Request) => {
       wochenstunden: daten.wochenstunden ?? null,
       arbeitsort_region: daten.arbeitsort_region,
       eintrittstermin: daten.eintrittstermin,
+      klinik_id: daten.klinik_id ?? null,
     })
     .select("id")
     .single();

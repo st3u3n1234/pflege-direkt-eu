@@ -5,7 +5,13 @@
 // sondern aus supabase/functions/_shared/enums.json — das ist die einzige
 // kanonische Quelle, die sowohl Datenbank-Migration, Edge Function (Zod) als
 // auch dieses Frontend verwenden. Nicht hier duplizieren.
-import { enums } from "../../supabase/functions/bewerbung-einreichen/_shared/enums.ts";
+import {
+  enums,
+  berufBereichMatrix,
+  qualifikationAnzeige,
+} from "../../supabase/functions/bewerbung-einreichen/_shared/enums.ts";
+
+export { berufBereichMatrix, qualifikationAnzeige };
 
 export interface NavItem {
   label: string;

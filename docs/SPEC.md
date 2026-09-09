@@ -1,4 +1,4 @@
-# SPEC — PflegeDirekt v1
+# SPEC — SymplyMedical (vormals PflegeDirekt) v1
 
 Ergebnis des Phase-0-Interviews. Ergänzt `CLAUDE.md` um die Punkte, die das
 Konzept-PDF offen lässt. Bei Widerspruch zwischen PDF und diesem Dokument
@@ -32,10 +32,18 @@ gilt dieses Dokument als aktueller Stand.
   noch offen (siehe unten) — bis zur Entscheidung reicht ein einfacher
   manueller Weg (z. B. direktes Einpflegen durch das Team), kein eigenes
   Klinik-Login.
-- **Kein automatisches/regelbasiertes Matching.** Das interne Team gleicht
-  Bewerbungen manuell mit den Klinik-Anforderungen ab. Die Software liefert
-  dafür nur eine filterbare interne Übersicht der eingegangenen Bewerbungen,
-  keinen Matching-Algorithmus.
+- **Kein automatisches/regelbasiertes Matching der Bewerbung selbst.** Das
+  interne Team gleicht eingegangene Bewerbungen weiterhin manuell mit den
+  Klinik-Anforderungen ab.
+  **Teilweise revidiert in Phase 5:** Der Funnel bekommt einen neuen
+  „Verfügbarkeit"-Schritt, der dem Bewerber vor dem Absenden anzeigt, welche
+  (Test-)Kliniken für seine Beruf+Bereich-Kombination offene Stellen haben —
+  das ist ein einfacher Datenbank-Abgleich, kein Matching-Algorithmus, und
+  ersetzt nicht die manuelle Prüfung durch das Team nach Eingang der
+  Bewerbung. **Wichtig:** Die hinterlegten Kliniken/Stellen sind aktuell
+  Platzhalterdaten zu Testzwecken (klar als „(Beispiel)" gekennzeichnet) —
+  vor echtem Betrieb mit echten Bewerbern müssen sie durch reale Daten
+  ersetzt oder der Schritt deaktiviert werden.
 - **Keine eigene Domain.** Betrieb zunächst über eine `*.netlify.app`-
   Subdomain; Anbindung einer echten Domain ist ein späterer Schritt außerhalb
   von v1.

@@ -1,6 +1,17 @@
-# PflegeDirekt — Projektkontext
+# SymplyMedical — Projektkontext
 
 Direktvermittlung von examinierten Pflegefachpersonen, OTA und ATA an Kliniken.
+Markenname seit Phase 5 „SymplyMedical" (vorher „PflegeDirekt" — Projekt-/
+Repo-/Netlify-Bezeichner blieben bewusst unverändert, siehe
+„Live-Infrastruktur" unten). Logo: Siegel-Emblem `public/logo-symplymedical.png`
+(Eule + Äskulapstab), Lockup mit Schriftzug in `public/logo-symplymedical-lockup.png`.
+
+**Hinweis zur Zielgruppe:** Der Nutzer hat eine Erweiterung auf ca. 25
+Berufsgruppen (inkl. Ärzte, Rettungsdienst, Therapieberufe, MFA — teils
+bisher explizit ausgeschlossen) angekündigt. Das ist ein eigener, noch nicht
+umgesetzter Umbau mit eigener Planung — der Abschnitt „Zielgruppe" unten
+beschreibt den *aktuellen* Stand (examinierte Pflegefachpersonen/OTA/ATA),
+nicht den Zielzustand.
 Konzeptgrundlage: [docs/Website-Konzept_Pflegevermittlung.pdf](docs/Website-Konzept_Pflegevermittlung.pdf).
 Offene fachliche/rechtliche Fragen, die das PDF nicht beantwortet, werden in
 Phase 0 geklärt und in `docs/SPEC.md` festgehalten — dieses Dokument enthält
@@ -100,8 +111,11 @@ gemerged wird.
 
 ## Design-Ton
 
-Ruhig, vertrauenswürdig, medizinisches Umfeld. Keine Stock-Ästhetik, kein
-generischer Startup-Blau-Gradient. Barrierefreiheit (WCAG 2.1 AA) ist
+Ruhig, vertrauenswürdig, medizinisches Umfeld. Kuratierte, nicht generische
+klinische Fotografie statt beliebiger Stock-Bilder (seit Phase 5: drei
+Unsplash-Fotos — EKG-Monitor, OP-Team, OP-Handschuhe — bewusst ausgewählt,
+per CSS-Overlay auf die Petrol-Palette abgestimmt), kein generischer
+Startup-Blau-Gradient. Barrierefreiheit (WCAG 2.1 AA) ist
 Anforderung, nicht Kür: Kontraste, Fokuszustände, Formularlabels,
 Tastaturbedienung, Screenreader-Ansage bei Schrittwechseln im Funnel.
 
@@ -146,6 +160,30 @@ Zeugnis-Upload läuft nie durch die Edge Function selbst, sondern über eine
 von ihr erzeugte signierte Storage-Upload-URL (Pfadschema
 `bewerbungen/{bewerbung_id}/zeugnis`) — das Frontend lädt direkt zu Storage
 hoch.
+
+## Beruf→Bereich-Matrix (Phase 5, berufsrechtlich geprüft)
+
+Rechtsgrundlage: ATA-OTA-Gesetz §§ 9/10, PflBG §§ 1, 4, 64/64a (vom Nutzer
+gegengeprüft). Zwei Felder pro Beruf statt einer einzelnen Erlaubt/Verboten-
+Flagge, weil „berufsrechtlich zulässig" und „praktisch ausgeschrieben"
+auseinanderfallen (z. B. bei Altenpflege):
+
+| Beruf | `rechtlich_zulaessig` | `marktgaengig` |
+|---|---|---|
+| OTA | OP, Zentrale Notaufnahme | OP |
+| ATA | Anästhesie, OP, Zentrale Notaufnahme | Anästhesie |
+| Pflegefachfrau/-mann | alle 6 | alle 6 |
+| Gesundheits- und Krankenpfleger/in | alle 6 | alle außer Neo-Intensivstation |
+| Gesundheits- und Kinderkrankenpfleger/in | alle 6 | Neo-Intensivstation, Normalstation, Zentrale Notaufnahme |
+| Altenpfleger/in | alle 6 | Normalstation |
+
+OTA/ATA erhalten **nie** Intensivstation/Neo-Intensivstation (ITS ist laut
+Rechtsprüfung „No-go-Area" für beide). Quelle:
+`supabase/functions/bewerbung-einreichen/_shared/enums.ts`
+(`berufBereichMatrix`). Fachweiterbildung ist eine eigene Filterdimension,
+kein Teil dieser Matrix. Job-Titel-Synonyme seit PflStudStG 15.12.2023
+(„Pflegefachperson", „Altenpflegefachperson") sind reine Anzeige-Zusätze
+(`qualifikationAnzeige`), keine eigenen Enum-Werte.
 
 ## Nicht Teil dieses Dokuments
 
