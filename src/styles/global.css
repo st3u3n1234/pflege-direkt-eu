@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @import "@fontsource/fraunces/500.css";
 @import "@fontsource/fraunces/600.css";
 @import "@fontsource/fraunces/700.css";
@@ -39,6 +41,23 @@
 
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-serif: "Fraunces", "Iowan Old Style", Georgia, serif;
+}
+
+/* Dark Mode: nur die neutralen Töne kehren um, Petrol/Gold bleiben über
+   beide Modi identisch (Wiedererkennung — Buttons/Footer sind schon jetzt
+   dunkel und brauchen keine Anpassung). Höhere Spezifität als :root (aus
+   @theme) durch die zusätzliche Klasse, damit die Reihenfolge im
+   kompilierten CSS keine Rolle spielt. */
+:root.dark {
+  --color-ink: #f2efe7;
+  --color-ink-soft: #cbc6ba;
+  --color-ink-faint: #948e80;
+
+  --color-surface: #151813;
+  --color-surface-alt: #1c1f19;
+  --color-surface-card: #232821;
+  --color-border: #33372d;
+  --color-border-strong: #474c3e;
 }
 
 html {

@@ -119,6 +119,18 @@ Startup-Blau-Gradient. Barrierefreiheit (WCAG 2.1 AA) ist
 Anforderung, nicht Kür: Kontraste, Fokuszustände, Formularlabels,
 Tastaturbedienung, Screenreader-Ansage bei Schrittwechseln im Funnel.
 
+**Dark Mode (seit Phase 6):** Umschaltbar per Button im Header
+(`[data-theme-toggle]`), persistiert in `localStorage`. Nur die neutralen
+Design-Token (`--color-ink*`, `--color-surface*`, `--color-border*`) kehren
+in `:root.dark` (`src/styles/global.css`) um — Petrol/Gold bleiben
+markenkonform in beiden Modi identisch. `public/theme-init.js` setzt die
+`dark`-Klasse clientseitig **vor** dem ersten Render (blockierendes
+externes Script, kein Flackern, CSP-konform ohne `unsafe-inline` — die
+Seite ist statisch, es gibt kein serverseitiges Rendering, das den Modus
+vorab kennen könnte). Damit gibt es jetzt **zwei** JS-Stellen auf der
+öffentlichen Seite (nicht mehr nur der Funnel): die beiden Theme-Scripts,
+sitesweit über `BaseLayout` eingebunden — beide minimal, kein Framework.
+
 ## Tech-Stack (Zielarchitektur)
 
 - Frontend: Astro, TypeScript strict, Tailwind, npm
