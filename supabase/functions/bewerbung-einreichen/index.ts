@@ -210,6 +210,21 @@ Deno.serve(async (req: Request) => {
 
   await supabaseAdmin.from("bewerbungen").update({ zeugnis_pfad: zeugnisPfad }).eq("id", bewerbung.id);
 
+  // Zusätzlich ins Admin-Dokumentenmodell eintragen (Phase 6), damit die
+  // Bewerbung im Admin-Bereich vollständig mit Dokument erscheint. Kein
+  // Abbruch, falls das fehlschlägt — zeugnis_pfad auf der Bewerbung bleibt
+  // die primäre Quelle der Wahrheit.
+  const { error: dokumentError } = await supabaseAdmin.from("dokumente").insert({
+    bewerbung_id: bewerbung.id,
+    typ: "urkunde",
+    storage_pfad: zeugnisPfad,
+    dateiname: "zeugnis",
+    quelle: "bewerber_upload",
+  });
+  if (dokumentError) {
+    console.error("Dokumente-Eintrag konnte nicht angelegt werden", dokumentError);
+  }
+
   return jsonResponse(201, {
     bewerbungId: bewerbung.id,
     upload: {
