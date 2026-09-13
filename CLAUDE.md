@@ -242,6 +242,44 @@ Edge Functions mit `service_role` schreibt.
   automatische Bereinigung in v1 — offene Rechtsfrage aus `docs/SPEC.md`
   bleibt unverändert offen).
 
+## Bewerber-Konto (Phase 7)
+
+Self-Service-Bereich unter `/konto/*` für Bewerber:innen — anders als
+`/admin/*` **mit** öffentlichem Header/Footer (`BaseLayout`), aber ebenfalls
+aus Sitemap/`robots.txt` ausgeschlossen (personenbezogen, kein
+Marketing-Ziel). Autorisierung läuft über Besitz (`bewerbungen.user_id =
+auth.uid()`), nicht über eine Rolle wie beim Admin-Layer.
+
+- **Konto-Erstellung ist Pflicht bei jeder Bewerbung**, passiert aber ohne
+  zusätzlichen Schritt im Funnel: `BewerbungsFunnel.astro` ruft nach
+  erfolgreichem Absenden `signInWithOtp()` auf (Magic Link, passwortlos) —
+  ein normaler öffentlicher supabase-js-Aufruf, keine Änderung an der
+  Edge Function `bewerbung-einreichen` nötig. **Alte, vor Phase 7
+  eingegangene Bewerbungen bleiben bewusst unverknüpft** (kein
+  rückwirkendes Verknüpfen per E-Mail-Abgleich).
+- **Verknüpfung beim ersten Login:** Der Magic Link zeigt auf
+  `/konto/?claim=<bewerbung_id>`. Die Funktion `bewerbung_konto_verknuepfen()`
+  (security definer) setzt `user_id` nur, wenn die Zeile noch unverknüpft
+  ist **und** die JWT-E-Mail exakt zur Bewerbung passt — Autorisierung
+  steckt in der Funktion, nicht in einer offenen RLS-Policy (analog
+  `log_admin_audit()`).
+- **Geschützte Spalten:** Der Trigger
+  `bewerbungen_bewerber_spalten_schuetzen` verhindert, dass ein
+  eingeloggter Bewerber (nicht `service_role`, nicht `is_admin()`)
+  `status`, `klinik_id`, `user_id`, `loeschdatum`, `zeugnis_pfad` oder
+  `email` selbst ändert. Stammdaten/Berufsangaben darüber hinaus sind frei
+  editierbar.
+- **Dokumente:** dieselbe `dokumente`-Tabelle wie im Admin-Layer, RLS-scoped
+  auf die eigene Bewerbung — ein Bewerber sieht/verwaltet damit automatisch
+  auch das ursprüngliche Funnel-Zeugnis, ohne separate Migration.
+- **Löschen (Art. 17 DSGVO, Selbstauskunft):** eigene Edge Function
+  `konto-bewerbung-loeschen`, strukturell identisch zu
+  `admin-bewerbung-loeschen`, aber Autorisierung über
+  `bewerbungen.user_id === auth.uid()` statt `is_admin()`. Eigener
+  `audit_log`-Aktionswert `bewerbung_selbst_geloescht`.
+- **Nicht Teil von v1:** E-Mail-Änderung im Self-Service, Passwort-Login als
+  Alternative zum Magic Link, rückwirkendes Verknüpfen alter Bewerbungen.
+
 ## Nicht Teil dieses Dokuments
 
 Klinik-Onboarding, Matching-Logik, Benachrichtigungswege, Domain und
