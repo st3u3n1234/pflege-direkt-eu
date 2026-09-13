@@ -1,0 +1,327 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { qualifikationOptionen, fachweiterbildungen, einsatzbereiche } from "../../data/content";
+import { statusReihenfolge, statusLabels } from "../../lib/adminLabels";
+
+const selectClass =
+  "mt-1 w-full rounded-lg border border-(--color-border-strong) bg-(--color-surface-card) px-3 py-2 text-sm text-(--color-ink)";
+const labelClass = "text-xs font-medium text-(--color-ink-soft)";
+---
+
+<AdminLayout title="Bewerbungen">
+  <div class="mx-auto max-w-6xl px-6 py-8">
+    <header class="flex items-center justify-between gap-4">
+      <div class="flex items-center gap-2.5">
+        <img src="/logo-symplymedical.png" alt="" width="28" height="28" class="h-7 w-7" />
+        <span class="font-serif text-lg font-semibold text-(--color-ink)">SymplyMedical Admin</span>
+      </div>
+      <button id="logout-btn" class="text-sm font-medium text-(--color-ink-soft) hover:text-(--color-ink)">
+        Abmelden
+      </button>
+    </header>
+
+    <h1 class="mt-8 font-serif text-2xl font-semibold text-(--color-ink)">Bewerbungen</h1>
+
+    <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div>
+        <label for="f-suche" class={labelClass}>Suche (Name / E-Mail)</label>
+        <input id="f-suche" type="search" class={selectClass} />
+      </div>
+      <div>
+        <label for="f-beruf" class={labelClass}>Beruf</label>
+        <select id="f-beruf" class={selectClass}>
+          <option value="">Alle</option>
+          {qualifikationOptionen.map((q) => <option value={q}>{q}</option>)}
+        </select>
+      </div>
+      <div>
+        <label for="f-bereich" class={labelClass}>Einsatzbereich</label>
+        <select id="f-bereich" class={selectClass}>
+          <option value="">Alle</option>
+          {einsatzbereiche.map((b) => <option value={b.name}>{b.name}</option>)}
+        </select>
+      </div>
+      <div>
+        <label for="f-fachweiterbildung" class={labelClass}>Fachweiterbildung</label>
+        <select id="f-fachweiterbildung" class={selectClass}>
+          <option value="">Alle</option>
+          {fachweiterbildungen.map((f) => <option value={f}>{f}</option>)}
+        </select>
+      </div>
+      <div>
+        <label for="f-status" class={labelClass}>Status</label>
+        <select id="f-status" class={selectClass}>
+          <option value="">Alle</option>
+          {statusReihenfolge.map((s) => <option value={s}>{statusLabels[s]}</option>)}
+        </select>
+      </div>
+      <div>
+        <label for="f-region" class={labelClass}>Region</label>
+        <input id="f-region" type="text" class={selectClass} />
+      </div>
+      <div>
+        <label for="f-von" class={labelClass}>Eingang von</label>
+        <input id="f-von" type="date" class={selectClass} />
+      </div>
+      <div>
+        <label for="f-bis" class={labelClass}>Eingang bis</label>
+        <input id="f-bis" type="date" class={selectClass} />
+      </div>
+    </div>
+
+    <div class="mt-6 flex items-center justify-between gap-4">
+      <p id="ergebnis-info" class="text-sm text-(--color-ink-soft)"></p>
+      <button
+        id="csv-export-btn"
+        class="rounded-full border border-(--color-border-strong) px-4 py-2 text-sm font-semibold text-(--color-ink) hover:bg-(--color-surface-alt)"
+      >
+        CSV-Export
+      </button>
+    </div>
+
+    <div class="mt-3 overflow-x-auto rounded-2xl border border-(--color-border)">
+      <table class="w-full min-w-[900px] text-left text-sm">
+        <thead class="bg-(--color-surface-alt) text-xs text-(--color-ink-faint) uppercase">
+          <tr>
+            <th class="px-4 py-3">Name</th>
+            <th class="px-4 py-3">Beruf</th>
+            <th class="px-4 py-3">Bereich</th>
+            <th class="px-4 py-3">PLZ / Ort</th>
+            <th class="px-4 py-3">Eingang</th>
+            <th class="px-4 py-3">Status</th>
+            <th class="px-4 py-3">Dok.</th>
+          </tr>
+        </thead>
+        <tbody id="tabelle-body"></tbody>
+      </table>
+    </div>
+
+    <div class="mt-4 flex items-center justify-between">
+      <button
+        id="prev-btn"
+        class="rounded-full border border-(--color-border-strong) px-4 py-2 text-sm text-(--color-ink) disabled:opacity-40"
+      >
+        Zurück
+      </button>
+      <span id="page-info" class="text-sm text-(--color-ink-soft)"></span>
+      <button
+        id="next-btn"
+        class="rounded-full border border-(--color-border-strong) px-4 py-2 text-sm text-(--color-ink) disabled:opacity-40"
+      >
+        Weiter
+      </button>
+    </div>
+  </div>
+</AdminLayout>
+
+<script>
+  import { requireAdmin } from "../../lib/adminGuard";
+  import { supabase } from "../../lib/supabaseClient";
+  import { statusLabels } from "../../lib/adminLabels";
+
+  const admin = await requireAdmin();
+  if (admin) {
+    const PAGE_SIZE = 25;
+    let page = 0;
+
+    const els = {
+      suche: document.getElementById("f-suche") as HTMLInputElement,
+      beruf: document.getElementById("f-beruf") as HTMLSelectElement,
+      bereich: document.getElementById("f-bereich") as HTMLSelectElement,
+      fachweiterbildung: document.getElementById("f-fachweiterbildung") as HTMLSelectElement,
+      status: document.getElementById("f-status") as HTMLSelectElement,
+      region: document.getElementById("f-region") as HTMLInputElement,
+      von: document.getElementById("f-von") as HTMLInputElement,
+      bis: document.getElementById("f-bis") as HTMLInputElement,
+    };
+
+    function escapeHtml(value: unknown): string {
+      const map: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+      return String(value ?? "").replace(/[&<>"']/g, (c) => map[c]);
+    }
+
+    function currentFilters() {
+      return {
+        suche: els.suche.value,
+        beruf: els.beruf.value,
+        bereich: els.bereich.value,
+        fachweiterbildung: els.fachweiterbildung.value,
+        status: els.status.value,
+        region: els.region.value,
+        von: els.von.value,
+        bis: els.bis.value,
+      };
+    }
+
+    // deno-lint-ignore no-explicit-any
+    function applyFilters(query: any) {
+      const suche = els.suche.value.trim();
+      if (suche) {
+        query = query.or(`vorname.ilike.%${suche}%,nachname.ilike.%${suche}%,email.ilike.%${suche}%`);
+      }
+      if (els.beruf.value) query = query.eq("qualifikation", els.beruf.value);
+      if (els.bereich.value) query = query.eq("einsatzbereich", els.bereich.value);
+      if (els.fachweiterbildung.value) query = query.eq("fachweiterbildung", els.fachweiterbildung.value);
+      if (els.status.value) query = query.eq("status", els.status.value);
+      if (els.region.value.trim()) query = query.ilike("arbeitsort_region", `%${els.region.value.trim()}%`);
+      if (els.von.value) query = query.gte("created_at", els.von.value);
+      if (els.bis.value) query = query.lte("created_at", `${els.bis.value}T23:59:59`);
+      return query;
+    }
+
+    function csvEscape(value: unknown): string {
+      const s = String(value ?? "");
+      if (/[;"\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+      return s;
+    }
+
+    function debounce(fn: () => void, ms: number) {
+      let handle: ReturnType<typeof setTimeout>;
+      return () => {
+        clearTimeout(handle);
+        handle = setTimeout(fn, ms);
+      };
+    }
+
+    async function ladeListe() {
+      const from = page * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+      const query = applyFilters(
+        supabase
+          .from("bewerbungen")
+          .select(
+            "id, vorname, nachname, qualifikation, einsatzbereich, plz, ort, created_at, status, dokumente(count)",
+            { count: "exact" },
+          )
+          .order("created_at", { ascending: false })
+          .range(from, to),
+      );
+
+      const { data, count, error } = await query;
+      const tbody = document.getElementById("tabelle-body")!;
+      tbody.innerHTML = "";
+
+      if (error) {
+        tbody.innerHTML =
+          '<tr><td colspan="7" class="px-4 py-6 text-center text-(--color-ink-faint)">Fehler beim Laden.</td></tr>';
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        tbody.innerHTML =
+          '<tr><td colspan="7" class="px-4 py-6 text-center text-(--color-ink-faint)">Keine Treffer.</td></tr>';
+      } else {
+        for (const row of data as Record<string, unknown>[]) {
+          const tr = document.createElement("tr");
+          tr.className = "cursor-pointer border-t border-(--color-border) hover:bg-(--color-surface-alt)";
+          const dokumente = row.dokumente as { count: number }[] | undefined;
+          const dokCount = dokumente?.[0]?.count ?? 0;
+          tr.innerHTML = `
+            <td class="px-4 py-3">${escapeHtml(row.vorname)} ${escapeHtml(row.nachname)}</td>
+            <td class="px-4 py-3">${escapeHtml(row.qualifikation)}</td>
+            <td class="px-4 py-3">${escapeHtml(row.einsatzbereich)}</td>
+            <td class="px-4 py-3">${escapeHtml(row.plz)} ${escapeHtml(row.ort)}</td>
+            <td class="px-4 py-3">${new Date(String(row.created_at)).toLocaleDateString("de-DE")}</td>
+            <td class="px-4 py-3">${statusLabels[String(row.status)] ?? String(row.status)}</td>
+            <td class="px-4 py-3">${dokCount > 0 ? dokCount : "—"}</td>
+          `;
+          tr.addEventListener("click", () => {
+            window.location.href = `/admin/bewerbung?id=${row.id}`;
+          });
+          tbody.appendChild(tr);
+        }
+      }
+
+      const total = count ?? 0;
+      document.getElementById("ergebnis-info")!.textContent = `${total} Treffer`;
+      document.getElementById("page-info")!.textContent =
+        `Seite ${page + 1} von ${Math.max(1, Math.ceil(total / PAGE_SIZE))}`;
+      (document.getElementById("prev-btn") as HTMLButtonElement).disabled = page === 0;
+      (document.getElementById("next-btn") as HTMLButtonElement).disabled = to + 1 >= total;
+
+      await supabase.rpc("log_admin_audit", {
+        p_aktion: "liste_abgefragt",
+        p_zieltabelle: "bewerbungen",
+        p_details: currentFilters(),
+      });
+    }
+
+    const filterEls = [
+      els.beruf,
+      els.bereich,
+      els.fachweiterbildung,
+      els.status,
+      els.region,
+      els.von,
+      els.bis,
+    ];
+    filterEls.forEach((el) => {
+      el.addEventListener("change", () => {
+        page = 0;
+        void ladeListe();
+      });
+    });
+    els.suche.addEventListener(
+      "input",
+      debounce(() => {
+        page = 0;
+        void ladeListe();
+      }, 400),
+    );
+
+    document.getElementById("prev-btn")!.addEventListener("click", () => {
+      if (page > 0) {
+        page--;
+        void ladeListe();
+      }
+    });
+    document.getElementById("next-btn")!.addEventListener("click", () => {
+      page++;
+      void ladeListe();
+    });
+
+    document.getElementById("logout-btn")!.addEventListener("click", async () => {
+      await supabase.auth.signOut();
+      window.location.href = "/admin/login";
+    });
+
+    document.getElementById("csv-export-btn")!.addEventListener("click", async () => {
+      const query = applyFilters(
+        supabase
+          .from("bewerbungen")
+          .select(
+            "vorname, nachname, email, telefon, qualifikation, fachweiterbildung, einsatzbereich, arbeitszeitmodell, wochenstunden, arbeitsort_region, eintrittstermin, plz, ort, status, created_at",
+          )
+          .order("created_at", { ascending: false }),
+      );
+      const { data, error } = await query;
+      if (error || !data) return;
+
+      const headers = [
+        "Vorname", "Nachname", "E-Mail", "Telefon", "Beruf", "Fachweiterbildung", "Einsatzbereich",
+        "Arbeitsmodell", "Wochenstunden", "Wunschregion", "Eintrittstermin", "PLZ", "Ort", "Status", "Eingang",
+      ];
+      const rows = (data as Record<string, unknown>[]).map((r) => [
+        r.vorname, r.nachname, r.email, r.telefon, r.qualifikation, r.fachweiterbildung, r.einsatzbereich,
+        r.arbeitszeitmodell, r.wochenstunden ?? "", r.arbeitsort_region, r.eintrittstermin, r.plz, r.ort,
+        statusLabels[String(r.status)] ?? r.status, new Date(String(r.created_at)).toLocaleDateString("de-DE"),
+      ]);
+      const csv = [headers, ...rows].map((row) => row.map(csvEscape).join(";")).join("\r\n");
+      const blob = new Blob([String.fromCharCode(0xfeff) + csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `bewerbungen-export-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      await supabase.rpc("log_admin_audit", {
+        p_aktion: "export_csv",
+        p_zieltabelle: "bewerbungen",
+        p_details: { ...currentFilters(), anzahl: data.length },
+      });
+    });
+
+    void ladeListe();
+  }
+</script>
