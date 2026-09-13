@@ -1,0 +1,390 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import {
+  qualifikationOptionen,
+  fachweiterbildungen,
+  einsatzbereiche,
+  arbeitszeitmodelle,
+  eintrittstermine,
+} from "../../data/content";
+import { statusReihenfolge, statusLabels, dokumentTypOptionen, dokumentTypLabels } from "../../lib/adminLabels";
+
+const fieldClass =
+  "mt-1 w-full rounded-lg border border-(--color-border-strong) bg-(--color-surface-card) px-3 py-2 text-sm text-(--color-ink)";
+const labelClass = "text-xs font-medium text-(--color-ink-soft)";
+---
+
+<AdminLayout title="Bewerbung">
+  <div class="mx-auto max-w-4xl px-6 py-8">
+    <a href="/admin/" class="text-sm font-medium text-(--color-primary-700) hover:text-(--color-primary-800)"
+      >← Zurück zur Liste</a
+    >
+
+    <div id="lade-hinweis" class="mt-6 text-sm text-(--color-ink-soft)">Wird geladen …</div>
+    <div id="nicht-gefunden" hidden class="mt-6 text-sm text-(--color-ink-soft)">Bewerbung nicht gefunden.</div>
+
+    <div id="inhalt" hidden>
+      <h1 id="titel" class="mt-6 font-serif text-2xl font-semibold text-(--color-ink)"></h1>
+
+      <!-- Status -->
+      <section class="mt-8 rounded-2xl border border-(--color-border) bg-(--color-surface-card) p-6">
+        <h2 class="text-base font-bold text-(--color-ink)">Status</h2>
+        <div class="mt-3 flex flex-wrap items-center gap-3">
+          <select id="status-select" class={fieldClass + " w-auto"}>
+            {statusReihenfolge.map((s) => <option value={s}>{statusLabels[s]}</option>)}
+          </select>
+          <button
+            id="status-speichern"
+            class="rounded-full bg-(--color-primary-600) px-5 py-2 text-sm font-semibold text-white hover:bg-(--color-primary-700)"
+          >
+            Status speichern
+          </button>
+        </div>
+        <div id="statusverlauf" class="mt-4 flex flex-col gap-1.5 text-sm text-(--color-ink-soft)"></div>
+      </section>
+
+      <!-- Stammdaten -->
+      <section class="mt-6 rounded-2xl border border-(--color-border) bg-(--color-surface-card) p-6">
+        <div class="flex items-center justify-between">
+          <h2 class="text-base font-bold text-(--color-ink)">Stammdaten</h2>
+          <button id="stammdaten-speichern" class="text-sm font-semibold text-(--color-primary-700) hover:text-(--color-primary-800)">
+            Speichern
+          </button>
+        </div>
+        <div class="mt-4 grid gap-4 sm:grid-cols-2">
+          <div><label class={labelClass}>Vorname</label><input id="f-vorname" class={fieldClass} /></div>
+          <div><label class={labelClass}>Nachname</label><input id="f-nachname" class={fieldClass} /></div>
+          <div class="sm:col-span-2"><label class={labelClass}>Straße</label><input id="f-strasse" class={fieldClass} /></div>
+          <div><label class={labelClass}>PLZ</label><input id="f-plz" class={fieldClass} /></div>
+          <div><label class={labelClass}>Ort</label><input id="f-ort" class={fieldClass} /></div>
+          <div><label class={labelClass}>E-Mail</label><input id="f-email" type="email" class={fieldClass} /></div>
+          <div><label class={labelClass}>Telefon</label><input id="f-telefon" class={fieldClass} /></div>
+          <div>
+            <label class={labelClass}>Beruf</label>
+            <select id="f-qualifikation" class={fieldClass}>
+              {qualifikationOptionen.map((q) => <option value={q}>{q}</option>)}
+            </select>
+          </div>
+          <div>
+            <label class={labelClass}>Fachweiterbildung</label>
+            <select id="f-fachweiterbildung" class={fieldClass}>
+              {fachweiterbildungen.map((f) => <option value={f}>{f}</option>)}
+            </select>
+          </div>
+          <div>
+            <label class={labelClass}>Einsatzbereich</label>
+            <select id="f-einsatzbereich" class={fieldClass}>
+              {einsatzbereiche.map((b) => <option value={b.name}>{b.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label class={labelClass}>Arbeitsmodell</label>
+            <select id="f-arbeitszeitmodell" class={fieldClass}>
+              {arbeitszeitmodelle.map((a) => <option value={a}>{a}</option>)}
+            </select>
+          </div>
+          <div><label class={labelClass}>Wochenstunden</label><input id="f-wochenstunden" type="number" min="1" max="48" class={fieldClass} /></div>
+          <div><label class={labelClass}>Wunschregion</label><input id="f-arbeitsort_region" class={fieldClass} /></div>
+          <div>
+            <label class={labelClass}>Eintrittstermin</label>
+            <select id="f-eintrittstermin" class={fieldClass}>
+              {eintrittstermine.map((e) => <option value={e}>{e}</option>)}
+            </select>
+          </div>
+          <div><label class={labelClass}>Löschdatum</label><input id="f-loeschdatum" type="date" class={fieldClass} /></div>
+        </div>
+      </section>
+
+      <!-- Dokumente -->
+      <section class="mt-6 rounded-2xl border border-(--color-border) bg-(--color-surface-card) p-6">
+        <h2 class="text-base font-bold text-(--color-ink)">Dokumente</h2>
+        <div id="dokumente-liste" class="mt-3 flex flex-col gap-2"></div>
+
+        <div class="mt-5 flex flex-wrap items-end gap-3 border-t border-(--color-border) pt-4">
+          <div>
+            <label class={labelClass}>Typ</label>
+            <select id="dok-typ" class={fieldClass}>
+              {dokumentTypOptionen.map((t) => <option value={t}>{dokumentTypLabels[t]}</option>)}
+            </select>
+          </div>
+          <div>
+            <label class={labelClass}>Datei</label>
+            <input id="dok-datei" type="file" accept="application/pdf,image/jpeg,image/png" class="mt-1 text-sm" />
+          </div>
+          <button id="dok-hochladen" class="rounded-full bg-(--color-primary-600) px-5 py-2 text-sm font-semibold text-white hover:bg-(--color-primary-700)">
+            Hochladen
+          </button>
+        </div>
+        <p id="dok-fehler" class="mt-2 text-sm font-medium text-red-700 dark:text-red-400" role="alert"></p>
+      </section>
+
+      <!-- Notizen -->
+      <section class="mt-6 rounded-2xl border border-(--color-border) bg-(--color-surface-card) p-6">
+        <h2 class="text-base font-bold text-(--color-ink)">Interne Notizen</h2>
+        <div id="notizen-liste" class="mt-3 flex flex-col gap-3"></div>
+        <div class="mt-4 flex flex-col gap-2 border-t border-(--color-border) pt-4">
+          <textarea id="notiz-text" rows="3" class={fieldClass} placeholder="Neue Notiz …"></textarea>
+          <button id="notiz-speichern" class="self-start rounded-full bg-(--color-primary-600) px-5 py-2 text-sm font-semibold text-white hover:bg-(--color-primary-700)">
+            Notiz speichern
+          </button>
+        </div>
+      </section>
+
+      <!-- Löschen -->
+      <section class="mt-6 rounded-2xl border border-red-300 bg-red-50 p-6 dark:border-red-900 dark:bg-red-950/30">
+        <h2 class="text-base font-bold text-red-800 dark:text-red-300">Bewerbung endgültig löschen</h2>
+        <p class="mt-1.5 text-sm text-red-700/90 dark:text-red-300/80">
+          Entfernt die Bewerbung inkl. aller Dokumente unwiderruflich (Art. 17 DSGVO). Nicht rückgängig zu machen.
+        </p>
+        <button id="loeschen-btn" class="mt-3 rounded-full bg-red-700 px-5 py-2 text-sm font-semibold text-white hover:bg-red-800">
+          Endgültig löschen
+        </button>
+      </section>
+    </div>
+  </div>
+</AdminLayout>
+
+<script>
+  import { requireAdmin } from "../../lib/adminGuard";
+  import { supabase } from "../../lib/supabaseClient";
+  import { statusLabels, dokumentTypLabels } from "../../lib/adminLabels";
+
+  const admin = await requireAdmin();
+  if (admin) {
+    const bewerbungId = new URLSearchParams(window.location.search).get("id");
+    const ladeHinweis = document.getElementById("lade-hinweis") as HTMLElement;
+    const nichtGefunden = document.getElementById("nicht-gefunden") as HTMLElement;
+    const inhalt = document.getElementById("inhalt") as HTMLElement;
+
+    if (!bewerbungId) {
+      ladeHinweis.hidden = true;
+      nichtGefunden.hidden = false;
+    } else {
+      await ladeBewerbung(bewerbungId);
+    }
+
+    async function ladeBewerbung(id: string) {
+      const { data, error } = await supabase.from("bewerbungen").select("*").eq("id", id).maybeSingle();
+      ladeHinweis.hidden = true;
+
+      if (error || !data) {
+        nichtGefunden.hidden = false;
+        return;
+      }
+
+      inhalt.hidden = false;
+      (document.getElementById("titel") as HTMLElement).textContent = `${data.vorname} ${data.nachname}`;
+
+      (document.getElementById("f-vorname") as HTMLInputElement).value = data.vorname;
+      (document.getElementById("f-nachname") as HTMLInputElement).value = data.nachname;
+      (document.getElementById("f-strasse") as HTMLInputElement).value = data.strasse;
+      (document.getElementById("f-plz") as HTMLInputElement).value = data.plz;
+      (document.getElementById("f-ort") as HTMLInputElement).value = data.ort;
+      (document.getElementById("f-email") as HTMLInputElement).value = data.email;
+      (document.getElementById("f-telefon") as HTMLInputElement).value = data.telefon;
+      (document.getElementById("f-qualifikation") as HTMLSelectElement).value = data.qualifikation;
+      (document.getElementById("f-fachweiterbildung") as HTMLSelectElement).value = data.fachweiterbildung;
+      (document.getElementById("f-einsatzbereich") as HTMLSelectElement).value = data.einsatzbereich;
+      (document.getElementById("f-arbeitszeitmodell") as HTMLSelectElement).value = data.arbeitszeitmodell;
+      (document.getElementById("f-wochenstunden") as HTMLInputElement).value = data.wochenstunden ?? "";
+      (document.getElementById("f-arbeitsort_region") as HTMLInputElement).value = data.arbeitsort_region;
+      (document.getElementById("f-eintrittstermin") as HTMLSelectElement).value = data.eintrittstermin;
+      (document.getElementById("f-loeschdatum") as HTMLInputElement).value = data.loeschdatum ?? "";
+      (document.getElementById("status-select") as HTMLSelectElement).value = data.status;
+
+      await Promise.all([ladeStatusverlauf(id), ladeDokumente(id), ladeNotizen(id)]);
+
+      await supabase.rpc("log_admin_audit", {
+        p_aktion: "detail_angesehen",
+        p_zieltabelle: "bewerbungen",
+        p_ziel_id: id,
+      });
+    }
+
+    async function ladeStatusverlauf(id: string) {
+      const { data } = await supabase
+        .from("status_verlauf")
+        .select("alter_status, neuer_status, zeitstempel, admin_users(email)")
+        .eq("bewerbung_id", id)
+        .order("zeitstempel", { ascending: true });
+
+      const el = document.getElementById("statusverlauf") as HTMLElement;
+      el.innerHTML = (data ?? [])
+        .map((v: Record<string, unknown>) => {
+          const admin = v.admin_users as { email: string } | null;
+          const von = v.alter_status ? `${statusLabels[String(v.alter_status)]} → ` : "";
+          const zeit = new Date(String(v.zeitstempel)).toLocaleString("de-DE");
+          return `<p>${zeit} — ${von}${statusLabels[String(v.neuer_status)]}${admin ? ` (${admin.email})` : ""}</p>`;
+        })
+        .join("");
+    }
+
+    async function ladeDokumente(id: string) {
+      const { data } = await supabase
+        .from("dokumente")
+        .select("id, typ, storage_pfad, dateiname, hochgeladen_am")
+        .eq("bewerbung_id", id)
+        .order("hochgeladen_am", { ascending: false });
+
+      const el = document.getElementById("dokumente-liste") as HTMLElement;
+      el.innerHTML = "";
+      for (const dok of data ?? []) {
+        const row = document.createElement("div");
+        row.className = "flex items-center justify-between gap-3 rounded-lg border border-(--color-border) px-3 py-2 text-sm";
+        row.innerHTML = `
+          <span>${dokumentTypLabels[dok.typ] ?? dok.typ} — ${dok.dateiname} <span class="text-(--color-ink-faint)">(${new Date(dok.hochgeladen_am).toLocaleDateString("de-DE")})</span></span>
+          <span class="flex gap-3">
+            <button data-download="${dok.storage_pfad}" data-dok-id="${dok.id}" class="font-semibold text-(--color-primary-700) hover:text-(--color-primary-800)">Ansehen</button>
+            <button data-delete-dok="${dok.id}" data-pfad="${dok.storage_pfad}" class="font-semibold text-red-700 dark:text-red-400">Löschen</button>
+          </span>
+        `;
+        el.appendChild(row);
+      }
+
+      el.querySelectorAll<HTMLButtonElement>("[data-download]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const pfad = btn.dataset.download!;
+          const dokId = btn.dataset.dokId!;
+          const { data: signed } = await supabase.storage.from("zeugnisse").createSignedUrl(pfad, 60);
+          if (signed?.signedUrl) {
+            window.open(signed.signedUrl, "_blank", "noopener");
+          }
+          await supabase.rpc("log_admin_audit", {
+            p_aktion: "dokument_abgerufen",
+            p_zieltabelle: "dokumente",
+            p_ziel_id: dokId,
+          });
+        });
+      });
+
+      el.querySelectorAll<HTMLButtonElement>("[data-delete-dok]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          if (!confirm("Dokument wirklich löschen?")) return;
+          const dokId = btn.dataset.deleteDok!;
+          const pfad = btn.dataset.pfad!;
+          await supabase.storage.from("zeugnisse").remove([pfad]);
+          await supabase.from("dokumente").delete().eq("id", dokId);
+          await ladeDokumente(id);
+        });
+      });
+    }
+
+    async function ladeNotizen(id: string) {
+      const { data } = await supabase
+        .from("notizen")
+        .select("text, erstellt_am, admin_users(email)")
+        .eq("bewerbung_id", id)
+        .order("erstellt_am", { ascending: false });
+
+      const el = document.getElementById("notizen-liste") as HTMLElement;
+      el.innerHTML = (data ?? [])
+        .map((n: Record<string, unknown>) => {
+          const admin = n.admin_users as { email: string } | null;
+          const zeit = new Date(String(n.erstellt_am)).toLocaleString("de-DE");
+          return `<div class="rounded-lg bg-(--color-surface-alt) p-3 text-sm"><p>${String(n.text).replace(/</g, "&lt;")}</p><p class="mt-1 text-xs text-(--color-ink-faint)">${zeit}${admin ? ` — ${admin.email}` : ""}</p></div>`;
+        })
+        .join("");
+    }
+
+    document.getElementById("stammdaten-speichern")!.addEventListener("click", async () => {
+      if (!bewerbungId) return;
+      const wochenstundenVal = (document.getElementById("f-wochenstunden") as HTMLInputElement).value;
+      const loeschdatumVal = (document.getElementById("f-loeschdatum") as HTMLInputElement).value;
+      await supabase
+        .from("bewerbungen")
+        .update({
+          vorname: (document.getElementById("f-vorname") as HTMLInputElement).value,
+          nachname: (document.getElementById("f-nachname") as HTMLInputElement).value,
+          strasse: (document.getElementById("f-strasse") as HTMLInputElement).value,
+          plz: (document.getElementById("f-plz") as HTMLInputElement).value,
+          ort: (document.getElementById("f-ort") as HTMLInputElement).value,
+          email: (document.getElementById("f-email") as HTMLInputElement).value,
+          telefon: (document.getElementById("f-telefon") as HTMLInputElement).value,
+          qualifikation: (document.getElementById("f-qualifikation") as HTMLSelectElement).value,
+          fachweiterbildung: (document.getElementById("f-fachweiterbildung") as HTMLSelectElement).value,
+          einsatzbereich: (document.getElementById("f-einsatzbereich") as HTMLSelectElement).value,
+          arbeitszeitmodell: (document.getElementById("f-arbeitszeitmodell") as HTMLSelectElement).value,
+          wochenstunden: wochenstundenVal ? Number(wochenstundenVal) : null,
+          arbeitsort_region: (document.getElementById("f-arbeitsort_region") as HTMLInputElement).value,
+          eintrittstermin: (document.getElementById("f-eintrittstermin") as HTMLSelectElement).value,
+          loeschdatum: loeschdatumVal || null,
+        })
+        .eq("id", bewerbungId);
+      alert("Gespeichert.");
+    });
+
+    document.getElementById("status-speichern")!.addEventListener("click", async () => {
+      if (!bewerbungId) return;
+      const neuerStatus = (document.getElementById("status-select") as HTMLSelectElement).value;
+      await supabase.from("bewerbungen").update({ status: neuerStatus }).eq("id", bewerbungId);
+      await ladeStatusverlauf(bewerbungId);
+    });
+
+    document.getElementById("notiz-speichern")!.addEventListener("click", async () => {
+      if (!bewerbungId || !admin) return;
+      const textarea = document.getElementById("notiz-text") as HTMLTextAreaElement;
+      const text = textarea.value.trim();
+      if (!text) return;
+      await supabase.from("notizen").insert({ bewerbung_id: bewerbungId, admin_user_id: admin.userId, text });
+      textarea.value = "";
+      await supabase.rpc("log_admin_audit", { p_aktion: "notiz_erstellt", p_zieltabelle: "notizen", p_ziel_id: bewerbungId });
+      await ladeNotizen(bewerbungId);
+    });
+
+    document.getElementById("dok-hochladen")!.addEventListener("click", async () => {
+      if (!bewerbungId || !admin) return;
+      const fehlerEl = document.getElementById("dok-fehler") as HTMLElement;
+      fehlerEl.textContent = "";
+      const fileInput = document.getElementById("dok-datei") as HTMLInputElement;
+      const typ = (document.getElementById("dok-typ") as HTMLSelectElement).value;
+      const file = fileInput.files?.[0];
+      if (!file) {
+        fehlerEl.textContent = "Bitte eine Datei auswählen.";
+        return;
+      }
+      const erlaubt = ["application/pdf", "image/jpeg", "image/png"];
+      if (!erlaubt.includes(file.type) || file.size > 10 * 1024 * 1024) {
+        fehlerEl.textContent = "Nur PDF/JPEG/PNG, max. 10 MB.";
+        return;
+      }
+      const dokumentId = crypto.randomUUID();
+      const pfad = `bewerbungen/${bewerbungId}/${dokumentId}`;
+      const { error: uploadError } = await supabase.storage.from("zeugnisse").upload(pfad, file);
+      if (uploadError) {
+        fehlerEl.textContent = "Upload fehlgeschlagen.";
+        return;
+      }
+      await supabase.from("dokumente").insert({
+        id: dokumentId,
+        bewerbung_id: bewerbungId,
+        typ,
+        storage_pfad: pfad,
+        dateiname: file.name,
+        hochgeladen_von: admin.userId,
+        quelle: "admin_upload",
+      });
+      fileInput.value = "";
+      await ladeDokumente(bewerbungId);
+    });
+
+    document.getElementById("loeschen-btn")!.addEventListener("click", async () => {
+      if (!bewerbungId) return;
+      if (!confirm("Diese Bewerbung inkl. aller Dokumente unwiderruflich löschen?")) return;
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      const response = await fetch(
+        `${import.meta.env.PUBLIC_SUPABASE_URL}/functions/v1/admin-bewerbung-loeschen`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ bewerbung_id: bewerbungId }),
+        },
+      );
+      if (response.ok) {
+        window.location.href = "/admin/";
+      } else {
+        alert("Löschen fehlgeschlagen.");
+      }
+    });
+  }
+</script>
