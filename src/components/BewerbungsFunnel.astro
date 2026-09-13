@@ -781,7 +781,7 @@ const TOTAL_STEPS = 8;
         try {
           await supabase.auth.signInWithOtp({
             email,
-            options: { emailRedirectTo: `${window.location.origin}/konto?claim=${cachedBewerbungId}` },
+            options: { emailRedirectTo: `${window.location.origin}/konto/?claim=${cachedBewerbungId}` },
           });
         } catch {
           // Absichtlich ignoriert, siehe Kommentar oben.
