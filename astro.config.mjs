@@ -10,8 +10,10 @@ export default defineConfig({
     sitemap({
       // Bestätigungsseite ist kein Ziel für Suchmaschinen (nur nach
       // erfolgreicher Bewerbung erreichbar). Admin-Bereich ist intern,
-      // nie öffentlich indexierbar (siehe auch robots.txt).
-      filter: (page) => !page.includes('/bewerbung-erfolgreich') && !page.includes('/admin'),
+      // nie öffentlich indexierbar (siehe auch robots.txt). /konto ist
+      // personenbezogener Self-Service-Bereich, ebenfalls nicht indexierbar.
+      filter: (page) =>
+        !page.includes('/bewerbung-erfolgreich') && !page.includes('/admin') && !page.includes('/konto'),
     }),
   ],
   vite: {

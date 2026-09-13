@@ -1,0 +1,336 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Section from "../../components/Section.astro";
+import {
+  qualifikationOptionen,
+  fachweiterbildungen,
+  einsatzbereiche,
+  arbeitszeitmodelle,
+  eintrittstermine,
+} from "../../data/content";
+import { dokumentTypOptionen, dokumentTypLabels } from "../../lib/adminLabels";
+
+const fieldClass =
+  "mt-1 w-full rounded-lg border border-(--color-border-strong) bg-(--color-surface-card) px-3 py-2 text-sm text-(--color-ink)";
+const labelClass = "text-xs font-medium text-(--color-ink-soft)";
+---
+
+<BaseLayout
+  title="Mein Konto"
+  description="Verwalte deine Bewerbung: Stammdaten, Dokumente und Löschung."
+>
+  <Section eyebrow="Mein Konto" title="Meine Bewerbung">
+    <div id="lade-hinweis" class="text-sm text-(--color-ink-soft)">Wird geladen …</div>
+
+    <div
+      id="keine-bewerbung"
+      hidden
+      class="max-w-xl rounded-2xl border border-(--color-border) bg-(--color-surface-alt) p-6 text-sm text-(--color-ink-soft)"
+    >
+      Es ist noch keine Bewerbung mit diesem Konto verknüpft.
+    </div>
+
+    <div id="bewerbungen-liste" class="flex max-w-3xl flex-col gap-10"></div>
+
+    <button
+      id="konto-abmelden"
+      class="mt-10 text-sm font-semibold text-(--color-ink-soft) hover:text-(--color-ink)"
+    >
+      Abmelden
+    </button>
+  </Section>
+
+  <!-- Vorlage für eine Bewerbungs-Karte, wird per JS geklont und befüllt -->
+  <template id="bewerbung-karte-vorlage">
+    <article class="rounded-2xl border border-(--color-border) bg-(--color-surface-card) p-6">
+      <div class="flex items-center justify-between gap-3">
+        <h3 data-field="titel" class="font-serif text-xl font-semibold text-(--color-ink)"></h3>
+        <span data-field="status" class="rounded-full bg-(--color-surface-alt) px-3 py-1 text-xs font-semibold text-(--color-ink-soft)"></span>
+      </div>
+      <p class="mt-1 text-xs text-(--color-ink-faint)">
+        Angemeldet als <span data-field="email"></span> — E-Mail-Änderung bitte über den Support.
+      </p>
+
+      <!-- Stammdaten -->
+      <div class="mt-6 border-t border-(--color-border) pt-5">
+        <div class="flex items-center justify-between">
+          <h4 class="text-sm font-bold text-(--color-ink)">Stammdaten</h4>
+          <button data-action="stammdaten-speichern" class="text-sm font-semibold text-(--color-primary-700) hover:text-(--color-primary-800)">
+            Speichern
+          </button>
+        </div>
+        <div class="mt-4 grid gap-4 sm:grid-cols-2">
+          <div><label class={labelClass}>Vorname</label><input data-field="vorname" class={fieldClass} /></div>
+          <div><label class={labelClass}>Nachname</label><input data-field="nachname" class={fieldClass} /></div>
+          <div class="sm:col-span-2"><label class={labelClass}>Straße</label><input data-field="strasse" class={fieldClass} /></div>
+          <div><label class={labelClass}>PLZ</label><input data-field="plz" class={fieldClass} /></div>
+          <div><label class={labelClass}>Ort</label><input data-field="ort" class={fieldClass} /></div>
+          <div><label class={labelClass}>Telefon</label><input data-field="telefon" class={fieldClass} /></div>
+          <div>
+            <label class={labelClass}>Beruf</label>
+            <select data-field="qualifikation" class={fieldClass}>
+              {qualifikationOptionen.map((q) => <option value={q}>{q}</option>)}
+            </select>
+          </div>
+          <div>
+            <label class={labelClass}>Fachweiterbildung</label>
+            <select data-field="fachweiterbildung" class={fieldClass}>
+              {fachweiterbildungen.map((f) => <option value={f}>{f}</option>)}
+            </select>
+          </div>
+          <div>
+            <label class={labelClass}>Einsatzbereich</label>
+            <select data-field="einsatzbereich" class={fieldClass}>
+              {einsatzbereiche.map((b) => <option value={b.name}>{b.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label class={labelClass}>Arbeitsmodell</label>
+            <select data-field="arbeitszeitmodell" class={fieldClass}>
+              {arbeitszeitmodelle.map((a) => <option value={a}>{a}</option>)}
+            </select>
+          </div>
+          <div><label class={labelClass}>Wochenstunden</label><input data-field="wochenstunden" type="number" min="1" max="48" class={fieldClass} /></div>
+          <div><label class={labelClass}>Wunschregion</label><input data-field="arbeitsort_region" class={fieldClass} /></div>
+          <div>
+            <label class={labelClass}>Eintrittstermin</label>
+            <select data-field="eintrittstermin" class={fieldClass}>
+              {eintrittstermine.map((e) => <option value={e}>{e}</option>)}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dokumente -->
+      <div class="mt-6 border-t border-(--color-border) pt-5">
+        <h4 class="text-sm font-bold text-(--color-ink)">Dokumente</h4>
+        <div data-field="dokumente-liste" class="mt-3 flex flex-col gap-2"></div>
+
+        <div class="mt-4 flex flex-wrap items-end gap-3">
+          <div>
+            <label class={labelClass}>Typ</label>
+            <select data-field="dok-typ" class={fieldClass}>
+              {dokumentTypOptionen.map((t) => <option value={t}>{dokumentTypLabels[t]}</option>)}
+            </select>
+          </div>
+          <div>
+            <label class={labelClass}>Datei</label>
+            <input data-field="dok-datei" type="file" accept="application/pdf,image/jpeg,image/png" class="mt-1 text-sm" />
+          </div>
+          <button data-action="dok-hochladen" class="rounded-full bg-(--color-primary-600) px-5 py-2 text-sm font-semibold text-white hover:bg-(--color-primary-700)">
+            Hochladen
+          </button>
+        </div>
+        <p data-field="dok-fehler" class="mt-2 text-sm font-medium text-red-700 dark:text-red-400" role="alert"></p>
+      </div>
+
+      <!-- Löschen -->
+      <div class="mt-6 rounded-xl border border-red-300 bg-red-50 p-5 dark:border-red-900 dark:bg-red-950/30">
+        <h4 class="text-sm font-bold text-red-800 dark:text-red-300">Bewerbung endgültig löschen</h4>
+        <p class="mt-1.5 text-sm text-red-700/90 dark:text-red-300/80">
+          Entfernt deine Bewerbung inkl. aller Dokumente unwiderruflich (Art. 17 DSGVO). Nicht
+          rückgängig zu machen.
+        </p>
+        <button data-action="loeschen" class="mt-3 rounded-full bg-red-700 px-5 py-2 text-sm font-semibold text-white hover:bg-red-800">
+          Endgültig löschen
+        </button>
+      </div>
+    </article>
+  </template>
+</BaseLayout>
+
+<script>
+  import { requireBewerberSession } from "../../lib/kontoGuard";
+  import { supabase } from "../../lib/supabaseClient";
+  import { statusLabels, dokumentTypLabels } from "../../lib/adminLabels";
+
+  const session = await requireBewerberSession();
+  if (session) {
+    const ladeHinweis = document.getElementById("lade-hinweis") as HTMLElement;
+    const keineBewerbung = document.getElementById("keine-bewerbung") as HTMLElement;
+    const liste = document.getElementById("bewerbungen-liste") as HTMLElement;
+    const vorlage = document.getElementById("bewerbung-karte-vorlage") as HTMLTemplateElement;
+
+    // Magic Link von einer frischen Bewerbung? Einmalig verknüpfen, dann
+    // URL bereinigen -- unabhängig vom Ergebnis (z. B. schon verknüpft).
+    const params = new URLSearchParams(window.location.search);
+    const claimId = params.get("claim");
+    if (claimId) {
+      await supabase.rpc("bewerbung_konto_verknuepfen", { p_bewerbung_id: claimId });
+      window.history.replaceState({}, "", "/konto/");
+    }
+
+    async function ladeBewerbungen() {
+      const { data, error } = await supabase
+        .from("bewerbungen")
+        .select("*")
+        .eq("user_id", session!.userId)
+        .order("created_at", { ascending: false });
+
+      ladeHinweis.hidden = true;
+
+      if (error || !data || data.length === 0) {
+        keineBewerbung.hidden = false;
+        return;
+      }
+
+      keineBewerbung.hidden = true;
+      liste.innerHTML = "";
+      for (const bewerbung of data) {
+        const karte = (vorlage.content.cloneNode(true) as DocumentFragment).firstElementChild as HTMLElement;
+        liste.appendChild(karte);
+        befuelleKarte(karte, bewerbung);
+      }
+    }
+
+    function feld(karte: HTMLElement, name: string): HTMLElement {
+      return karte.querySelector(`[data-field="${name}"]`) as HTMLElement;
+    }
+
+    function befuelleKarte(karte: HTMLElement, b: Record<string, any>) {
+      feld(karte, "titel").textContent = `${b.vorname} ${b.nachname}`;
+      feld(karte, "status").textContent = statusLabels[b.status] ?? b.status;
+      feld(karte, "email").textContent = b.email;
+
+      (feld(karte, "vorname") as HTMLInputElement).value = b.vorname;
+      (feld(karte, "nachname") as HTMLInputElement).value = b.nachname;
+      (feld(karte, "strasse") as HTMLInputElement).value = b.strasse;
+      (feld(karte, "plz") as HTMLInputElement).value = b.plz;
+      (feld(karte, "ort") as HTMLInputElement).value = b.ort;
+      (feld(karte, "telefon") as HTMLInputElement).value = b.telefon;
+      (feld(karte, "qualifikation") as HTMLSelectElement).value = b.qualifikation;
+      (feld(karte, "fachweiterbildung") as HTMLSelectElement).value = b.fachweiterbildung;
+      (feld(karte, "einsatzbereich") as HTMLSelectElement).value = b.einsatzbereich;
+      (feld(karte, "arbeitszeitmodell") as HTMLSelectElement).value = b.arbeitszeitmodell;
+      (feld(karte, "wochenstunden") as HTMLInputElement).value = b.wochenstunden ?? "";
+      (feld(karte, "arbeitsort_region") as HTMLInputElement).value = b.arbeitsort_region;
+      (feld(karte, "eintrittstermin") as HTMLSelectElement).value = b.eintrittstermin;
+
+      ladeDokumente(karte, b.id);
+
+      karte.querySelector('[data-action="stammdaten-speichern"]')!.addEventListener("click", async () => {
+        const wochenstundenVal = (feld(karte, "wochenstunden") as HTMLInputElement).value;
+        const { error: updateError } = await supabase
+          .from("bewerbungen")
+          .update({
+            vorname: (feld(karte, "vorname") as HTMLInputElement).value,
+            nachname: (feld(karte, "nachname") as HTMLInputElement).value,
+            strasse: (feld(karte, "strasse") as HTMLInputElement).value,
+            plz: (feld(karte, "plz") as HTMLInputElement).value,
+            ort: (feld(karte, "ort") as HTMLInputElement).value,
+            telefon: (feld(karte, "telefon") as HTMLInputElement).value,
+            qualifikation: (feld(karte, "qualifikation") as HTMLSelectElement).value,
+            fachweiterbildung: (feld(karte, "fachweiterbildung") as HTMLSelectElement).value,
+            einsatzbereich: (feld(karte, "einsatzbereich") as HTMLSelectElement).value,
+            arbeitszeitmodell: (feld(karte, "arbeitszeitmodell") as HTMLSelectElement).value,
+            wochenstunden: wochenstundenVal ? Number(wochenstundenVal) : null,
+            arbeitsort_region: (feld(karte, "arbeitsort_region") as HTMLInputElement).value,
+            eintrittstermin: (feld(karte, "eintrittstermin") as HTMLSelectElement).value,
+          })
+          .eq("id", b.id);
+        alert(updateError ? "Speichern fehlgeschlagen." : "Gespeichert.");
+      });
+
+      karte.querySelector('[data-action="dok-hochladen"]')!.addEventListener("click", async () => {
+        const fehlerEl = feld(karte, "dok-fehler");
+        fehlerEl.textContent = "";
+        const fileInput = feld(karte, "dok-datei") as HTMLInputElement;
+        const typ = (feld(karte, "dok-typ") as HTMLSelectElement).value;
+        const file = fileInput.files?.[0];
+        if (!file) {
+          fehlerEl.textContent = "Bitte eine Datei auswählen.";
+          return;
+        }
+        const erlaubt = ["application/pdf", "image/jpeg", "image/png"];
+        if (!erlaubt.includes(file.type) || file.size > 10 * 1024 * 1024) {
+          fehlerEl.textContent = "Nur PDF/JPEG/PNG, max. 10 MB.";
+          return;
+        }
+        const dokumentId = crypto.randomUUID();
+        const pfad = `bewerbungen/${b.id}/${dokumentId}`;
+        const { error: uploadError } = await supabase.storage.from("zeugnisse").upload(pfad, file);
+        if (uploadError) {
+          fehlerEl.textContent = "Upload fehlgeschlagen.";
+          return;
+        }
+        await supabase.from("dokumente").insert({
+          id: dokumentId,
+          bewerbung_id: b.id,
+          typ,
+          storage_pfad: pfad,
+          dateiname: file.name,
+          quelle: "bewerber_upload",
+        });
+        fileInput.value = "";
+        await ladeDokumente(karte, b.id);
+      });
+
+      karte.querySelector('[data-action="loeschen"]')!.addEventListener("click", async () => {
+        if (!confirm("Deine Bewerbung inkl. aller Dokumente unwiderruflich löschen?")) return;
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData.session?.access_token;
+        const response = await fetch(
+          `${import.meta.env.PUBLIC_SUPABASE_URL}/functions/v1/konto-bewerbung-loeschen`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ bewerbung_id: b.id }),
+          },
+        );
+        if (response.ok) {
+          karte.remove();
+          if (!liste.children.length) keineBewerbung.hidden = false;
+        } else {
+          alert("Löschen fehlgeschlagen.");
+        }
+      });
+    }
+
+    async function ladeDokumente(karte: HTMLElement, bewerbungId: string) {
+      const { data } = await supabase
+        .from("dokumente")
+        .select("id, typ, storage_pfad, dateiname, hochgeladen_am")
+        .eq("bewerbung_id", bewerbungId)
+        .order("hochgeladen_am", { ascending: false });
+
+      const el = feld(karte, "dokumente-liste");
+      el.innerHTML = "";
+      for (const dok of data ?? []) {
+        const row = document.createElement("div");
+        row.className =
+          "flex items-center justify-between gap-3 rounded-lg border border-(--color-border) px-3 py-2 text-sm";
+        row.innerHTML = `
+          <span>${dokumentTypLabels[dok.typ] ?? dok.typ} — ${dok.dateiname} <span class="text-(--color-ink-faint)">(${new Date(dok.hochgeladen_am).toLocaleDateString("de-DE")})</span></span>
+          <span class="flex gap-3">
+            <button data-ansehen="${dok.storage_pfad}" class="font-semibold text-(--color-primary-700) hover:text-(--color-primary-800)">Ansehen</button>
+            <button data-loeschen="${dok.id}" data-pfad="${dok.storage_pfad}" class="font-semibold text-red-700 dark:text-red-400">Löschen</button>
+          </span>
+        `;
+        el.appendChild(row);
+      }
+
+      el.querySelectorAll<HTMLButtonElement>("[data-ansehen]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const { data: signed } = await supabase.storage.from("zeugnisse").createSignedUrl(btn.dataset.ansehen!, 60);
+          if (signed?.signedUrl) window.open(signed.signedUrl, "_blank", "noopener");
+        });
+      });
+
+      el.querySelectorAll<HTMLButtonElement>("[data-loeschen]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          if (!confirm("Dokument wirklich löschen?")) return;
+          await supabase.storage.from("zeugnisse").remove([btn.dataset.pfad!]);
+          await supabase.from("dokumente").delete().eq("id", btn.dataset.loeschen!);
+          await ladeDokumente(karte, bewerbungId);
+        });
+      });
+    }
+
+    document.getElementById("konto-abmelden")!.addEventListener("click", async () => {
+      await supabase.auth.signOut();
+      window.location.href = "/";
+    });
+
+    await ladeBewerbungen();
+  }
+</script>
