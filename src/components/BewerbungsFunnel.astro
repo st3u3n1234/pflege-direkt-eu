@@ -295,6 +295,10 @@ const TOTAL_STEPS = 8;
         </label>
       </div>
       <p class={fieldError} data-error-for="datenschutz_zugestimmt" role="alert" />
+      <p class="mt-3 text-xs text-(--color-ink-faint)">
+        Mit dem Absenden richten wir automatisch ein Zugangskonto zu deiner E-Mail-Adresse ein, mit
+        dem du deine Bewerbung später jederzeit einsehen, ändern oder löschen kannst.
+      </p>
     </section>
 
     <!-- Schritt 8: Zeugnis-Upload -->
@@ -359,6 +363,7 @@ const TOTAL_STEPS = 8;
 
 <script>
   import { berufBereichMatrix } from "../data/content";
+  import { supabase } from "../lib/supabaseClient";
 
   // Supabase-URL/Anon-Key kommen als data-Attribute aus dem serverseitig
   // gerenderten HTML (siehe #bewerbungsfunnel oben) statt aus einem Inline-
@@ -632,6 +637,7 @@ const TOTAL_STEPS = 8;
   }
 
   let cachedUploadInfo: UploadInfo | null = null;
+  let cachedBewerbungId: string | null = null;
 
   const fieldToStep: Record<string, number> = {
     qualifikation: 1,
@@ -751,17 +757,37 @@ const TOTAL_STEPS = 8;
         }
         const body = await response.json();
         cachedUploadInfo = body.upload as UploadInfo;
+        cachedBewerbungId = body.bewerbungId ?? null;
       }
 
       if (!cachedUploadInfo?.signedUrl) {
         // Anti-Bot-Zweig der Edge Function (siehe dortiger Kommentar): keine
-        // echte Upload-URL vorhanden. Für den Aufrufer sieht es dennoch wie
-        // ein normaler Erfolg aus.
+        // echte Upload-URL vorhanden, bewerbungId ist eine Fake-ID. Für den
+        // Aufrufer sieht es dennoch wie ein normaler Erfolg aus — hier auch
+        // bewusst KEIN Magic-Link-Versand (sonst Missbrauch für Spam-Mails).
         window.location.href = "/bewerbung-erfolgreich";
         return;
       }
 
       await uploadWithProgress(cachedUploadInfo.signedUrl, file);
+
+      // Konto-Erstellung ist Pflicht bei jeder Bewerbung (siehe CLAUDE.md),
+      // passiert aber ohne zusätzlichen Schritt im Funnel: signInWithOtp legt
+      // bei Bedarf automatisch ein Auth-Konto an und verschickt den
+      // Magic Link. Best effort — ein fehlgeschlagener Mailversand darf den
+      // bereits gespeicherten Bewerbungsabschluss nicht verhindern.
+      if (cachedBewerbungId) {
+        const email = (document.getElementById("email") as HTMLInputElement).value.trim();
+        try {
+          await supabase.auth.signInWithOtp({
+            email,
+            options: { emailRedirectTo: `${window.location.origin}/konto?claim=${cachedBewerbungId}` },
+          });
+        } catch {
+          // Absichtlich ignoriert, siehe Kommentar oben.
+        }
+      }
+
       window.location.href = "/bewerbung-erfolgreich";
     } catch {
       setError(
