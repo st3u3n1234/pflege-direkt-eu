@@ -1,0 +1,28 @@
+---
+// Eigenes, schlankes Layout für den Admin-Bereich — kein öffentliches
+// Header/Footer/Marketing, nicht indexierbar (siehe auch robots.txt und
+// Sitemap-Filter in astro.config.mjs).
+import "../styles/global.css";
+
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title} · Admin · SymplyMedical</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <script is:inline src="/theme-init.js"></script>
+  </head>
+  <body class="min-h-screen bg-(--color-surface) text-(--color-ink)">
+    <slot />
+    <script is:inline src="/theme-toggle.js" defer></script>
+  </body>
+</html>

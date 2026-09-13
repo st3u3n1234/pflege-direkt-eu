@@ -1,0 +1,96 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+---
+
+<AdminLayout title="Login">
+  <div class="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6">
+    <div class="mb-8 flex items-center gap-2.5">
+      <img src="/logo-symplymedical.png" alt="" width="32" height="32" class="h-8 w-8" />
+      <span class="font-serif text-lg font-semibold text-(--color-ink)">SymplyMedical Admin</span>
+    </div>
+
+    <h1 class="font-serif text-2xl font-semibold text-(--color-ink)">Anmelden</h1>
+    <p class="mt-1.5 text-sm text-(--color-ink-soft)">Nur für internes Team.</p>
+
+    <form id="login-form" class="mt-6 flex flex-col gap-4" novalidate>
+      <div>
+        <label for="email" class="text-sm font-medium text-(--color-ink)">E-Mail</label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          required
+          autocomplete="username"
+          class="mt-1.5 w-full rounded-lg border border-(--color-border-strong) bg-(--color-surface-card) px-3.5 py-2.5 text-sm text-(--color-ink) outline-none focus-visible:border-(--color-primary-600) focus-visible:ring-2 focus-visible:ring-(--color-accent-gold)"
+        />
+      </div>
+      <div>
+        <label for="password" class="text-sm font-medium text-(--color-ink)">Passwort</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          required
+          autocomplete="current-password"
+          class="mt-1.5 w-full rounded-lg border border-(--color-border-strong) bg-(--color-surface-card) px-3.5 py-2.5 text-sm text-(--color-ink) outline-none focus-visible:border-(--color-primary-600) focus-visible:ring-2 focus-visible:ring-(--color-accent-gold)"
+        />
+      </div>
+      <p id="login-error" class="text-sm font-medium text-red-700 dark:text-red-400" role="alert"></p>
+      <button
+        type="submit"
+        id="login-submit"
+        class="rounded-full bg-(--color-primary-600) px-6 py-2.5 text-sm font-semibold text-white hover:bg-(--color-primary-700) disabled:opacity-60"
+      >
+        Anmelden
+      </button>
+    </form>
+  </div>
+</AdminLayout>
+
+<script>
+  import { supabase } from "../../lib/supabaseClient";
+
+  const errorEl = document.getElementById("login-error") as HTMLElement;
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("fehler") === "nicht_autorisiert") {
+    errorEl.textContent = "Dieser Account hat keine Admin-Berechtigung.";
+  }
+
+  // Bereits eingeloggt und Admin? Direkt weiterleiten, kein erneutes Login nötig.
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (sessionData.session) {
+    const { data: isAdmin } = await supabase.rpc("is_admin");
+    if (isAdmin) {
+      window.location.href = "/admin/";
+    }
+  }
+
+  const form = document.getElementById("login-form") as HTMLFormElement;
+  const submitBtn = document.getElementById("login-submit") as HTMLButtonElement;
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    errorEl.textContent = "";
+    submitBtn.disabled = true;
+
+    const email = (document.getElementById("email") as HTMLInputElement).value;
+    const password = (document.getElementById("password") as HTMLInputElement).value;
+
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      errorEl.textContent = "Anmeldung fehlgeschlagen. Bitte E-Mail und Passwort prüfen.";
+      submitBtn.disabled = false;
+      return;
+    }
+
+    const { data: isAdmin } = await supabase.rpc("is_admin");
+    if (!isAdmin) {
+      await supabase.auth.signOut();
+      errorEl.textContent = "Dieser Account hat keine Admin-Berechtigung.";
+      submitBtn.disabled = false;
+      return;
+    }
+
+    window.location.href = "/admin/";
+  });
+</script>

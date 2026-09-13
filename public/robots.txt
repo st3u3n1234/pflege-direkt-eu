@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
+Disallow: /admin
 
 Sitemap: https://pflege-direkt.netlify.app/sitemap-index.xml

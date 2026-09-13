@@ -9,8 +9,9 @@ export default defineConfig({
   integrations: [
     sitemap({
       // Bestätigungsseite ist kein Ziel für Suchmaschinen (nur nach
-      // erfolgreicher Bewerbung erreichbar).
-      filter: (page) => !page.includes('/bewerbung-erfolgreich'),
+      // erfolgreicher Bewerbung erreichbar). Admin-Bereich ist intern,
+      // nie öffentlich indexierbar (siehe auch robots.txt).
+      filter: (page) => !page.includes('/bewerbung-erfolgreich') && !page.includes('/admin'),
     }),
   ],
   vite: {
