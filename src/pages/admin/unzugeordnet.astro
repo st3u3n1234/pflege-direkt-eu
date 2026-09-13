@@ -1,0 +1,159 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { dokumentTypOptionen, dokumentTypLabels } from "../../lib/adminLabels";
+
+const fieldClass =
+  "mt-1 w-full rounded-lg border border-(--color-border-strong) bg-(--color-surface-card) px-3 py-2 text-sm text-(--color-ink)";
+const labelClass = "text-xs font-medium text-(--color-ink-soft)";
+---
+
+<AdminLayout title="Unzugeordnete Dokumente">
+  <div class="mx-auto max-w-3xl px-6 py-8">
+    <a href="/admin/" class="text-sm font-medium text-(--color-primary-700) hover:text-(--color-primary-800)"
+      >← Zurück zur Liste</a
+    >
+    <h1 class="mt-6 font-serif text-2xl font-semibold text-(--color-ink)">Unzugeordnete Dokumente</h1>
+    <p class="mt-1.5 text-sm text-(--color-ink-soft)">
+      Dokumente, die noch keiner Bewerbung zugeordnet sind (z. B. per E-Mail nachgereichte Unterlagen).
+    </p>
+
+    <section class="mt-6 rounded-2xl border border-(--color-border) bg-(--color-surface-card) p-6">
+      <h2 class="text-base font-bold text-(--color-ink)">Neues Dokument ohne Zuordnung hochladen</h2>
+      <div class="mt-3 flex flex-wrap items-end gap-3">
+        <div>
+          <label class={labelClass}>Typ</label>
+          <select id="dok-typ" class={fieldClass}>
+            {dokumentTypOptionen.map((t) => <option value={t}>{dokumentTypLabels[t]}</option>)}
+          </select>
+        </div>
+        <div>
+          <label class={labelClass}>Datei</label>
+          <input id="dok-datei" type="file" accept="application/pdf,image/jpeg,image/png" class="mt-1 text-sm" />
+        </div>
+        <button
+          id="dok-hochladen"
+          class="rounded-full bg-(--color-primary-600) px-5 py-2 text-sm font-semibold text-white hover:bg-(--color-primary-700)"
+        >
+          Hochladen
+        </button>
+      </div>
+      <p id="dok-fehler" class="mt-2 text-sm font-medium text-red-700 dark:text-red-400" role="alert"></p>
+    </section>
+
+    <section class="mt-6 rounded-2xl border border-(--color-border) bg-(--color-surface-card) p-6">
+      <h2 class="text-base font-bold text-(--color-ink)">Postfach</h2>
+      <div id="postfach-liste" class="mt-3 flex flex-col gap-4"></div>
+    </section>
+  </div>
+</AdminLayout>
+
+<script>
+  import { requireAdmin } from "../../lib/adminGuard";
+  import { supabase } from "../../lib/supabaseClient";
+  import { dokumentTypLabels } from "../../lib/adminLabels";
+
+  const admin = await requireAdmin();
+  if (admin) {
+    async function ladePostfach() {
+      const { data } = await supabase
+        .from("dokumente")
+        .select("id, typ, dateiname, storage_pfad, hochgeladen_am")
+        .is("bewerbung_id", null)
+        .order("hochgeladen_am", { ascending: false });
+
+      const el = document.getElementById("postfach-liste") as HTMLElement;
+      el.innerHTML = "";
+
+      if (!data || data.length === 0) {
+        el.innerHTML = '<p class="text-sm text-(--color-ink-faint)">Keine unzugeordneten Dokumente.</p>';
+        return;
+      }
+
+      for (const dok of data) {
+        const row = document.createElement("div");
+        row.className = "rounded-lg border border-(--color-border) p-3";
+        row.innerHTML = `
+          <div class="flex items-center justify-between gap-3 text-sm">
+            <span>${dokumentTypLabels[dok.typ] ?? dok.typ} — ${dok.dateiname} <span class="text-(--color-ink-faint)">(${new Date(dok.hochgeladen_am).toLocaleDateString("de-DE")})</span></span>
+            <button data-ansehen="${dok.storage_pfad}" class="font-semibold text-(--color-primary-700) hover:text-(--color-primary-800)">Ansehen</button>
+          </div>
+          <div class="mt-2 flex flex-wrap items-center gap-2">
+            <input data-suche placeholder="Name oder E-Mail suchen …" class="rounded-lg border border-(--color-border-strong) bg-(--color-surface-card) px-3 py-1.5 text-sm text-(--color-ink)" />
+          </div>
+          <div data-treffer class="mt-2 flex flex-col gap-1"></div>
+        `;
+        el.appendChild(row);
+
+        row.querySelector<HTMLButtonElement>("[data-ansehen]")!.addEventListener("click", async () => {
+          const { data: signed } = await supabase.storage.from("zeugnisse").createSignedUrl(dok.storage_pfad, 60);
+          if (signed?.signedUrl) window.open(signed.signedUrl, "_blank", "noopener");
+        });
+
+        const sucheInput = row.querySelector<HTMLInputElement>("[data-suche]")!;
+        const trefferEl = row.querySelector<HTMLElement>("[data-treffer]")!;
+        let debounceHandle: ReturnType<typeof setTimeout>;
+        sucheInput.addEventListener("input", () => {
+          clearTimeout(debounceHandle);
+          debounceHandle = setTimeout(async () => {
+            const suche = sucheInput.value.trim();
+            trefferEl.innerHTML = "";
+            if (!suche) return;
+            const { data: treffer } = await supabase
+              .from("bewerbungen")
+              .select("id, vorname, nachname, email")
+              .or(`vorname.ilike.%${suche}%,nachname.ilike.%${suche}%,email.ilike.%${suche}%`)
+              .limit(5);
+            for (const b of treffer ?? []) {
+              const btn = document.createElement("button");
+              btn.className =
+                "rounded-full border border-(--color-border-strong) px-3 py-1 text-left text-xs hover:bg-(--color-surface-alt)";
+              btn.textContent = `${b.vorname} ${b.nachname} — ${b.email}`;
+              btn.addEventListener("click", async () => {
+                await supabase.from("dokumente").update({ bewerbung_id: b.id }).eq("id", dok.id);
+                await ladePostfach();
+              });
+              trefferEl.appendChild(btn);
+            }
+          }, 300);
+        });
+      }
+    }
+
+    document.getElementById("dok-hochladen")!.addEventListener("click", async () => {
+      const fehlerEl = document.getElementById("dok-fehler") as HTMLElement;
+      fehlerEl.textContent = "";
+      const fileInput = document.getElementById("dok-datei") as HTMLInputElement;
+      const typ = (document.getElementById("dok-typ") as HTMLSelectElement).value;
+      const file = fileInput.files?.[0];
+      if (!file) {
+        fehlerEl.textContent = "Bitte eine Datei auswählen.";
+        return;
+      }
+      const erlaubt = ["application/pdf", "image/jpeg", "image/png"];
+      if (!erlaubt.includes(file.type) || file.size > 10 * 1024 * 1024) {
+        fehlerEl.textContent = "Nur PDF/JPEG/PNG, max. 10 MB.";
+        return;
+      }
+      const dokumentId = crypto.randomUUID();
+      const pfad = `unzugeordnet/${dokumentId}`;
+      const { error: uploadError } = await supabase.storage.from("zeugnisse").upload(pfad, file);
+      if (uploadError) {
+        fehlerEl.textContent = "Upload fehlgeschlagen.";
+        return;
+      }
+      await supabase.from("dokumente").insert({
+        id: dokumentId,
+        bewerbung_id: null,
+        typ,
+        storage_pfad: pfad,
+        dateiname: file.name,
+        hochgeladen_von: admin.userId,
+        quelle: "admin_upload",
+      });
+      fileInput.value = "";
+      await ladePostfach();
+    });
+
+    void ladePostfach();
+  }
+</script>

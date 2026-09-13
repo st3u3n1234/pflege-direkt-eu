@@ -15,9 +15,14 @@ const labelClass = "text-xs font-medium text-(--color-ink-soft)";
         <img src="/logo-symplymedical.png" alt="" width="28" height="28" class="h-7 w-7" />
         <span class="font-serif text-lg font-semibold text-(--color-ink)">SymplyMedical Admin</span>
       </div>
-      <button id="logout-btn" class="text-sm font-medium text-(--color-ink-soft) hover:text-(--color-ink)">
-        Abmelden
-      </button>
+      <div class="flex items-center gap-5">
+        <a href="/admin/unzugeordnet" class="text-sm font-medium text-(--color-ink-soft) hover:text-(--color-ink)">
+          Unzugeordnete Dokumente
+        </a>
+        <button id="logout-btn" class="text-sm font-medium text-(--color-ink-soft) hover:text-(--color-ink)">
+          Abmelden
+        </button>
+      </div>
     </header>
 
     <h1 class="mt-8 font-serif text-2xl font-semibold text-(--color-ink)">Bewerbungen</h1>
