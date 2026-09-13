@@ -197,6 +197,51 @@ kein Teil dieser Matrix. Job-Titel-Synonyme seit PflStudStG 15.12.2023
 („Pflegefachperson", „Altenpflegefachperson") sind reine Anzeige-Zusätze
 (`qualifikationAnzeige`), keine eigenen Enum-Werte.
 
+## Admin-Layer (Phase 6)
+
+Interner Backoffice-Bereich unter `/admin/*`, nicht öffentlich, aus
+Sitemap/`robots.txt` ausgeschlossen. Architektur bewusst anders als der
+öffentliche Teil: die Seite bleibt komplett statisch (`output: "static"`,
+kein SSR-Adapter), Admin-Seiten authentifizieren sich clientseitig über
+**Supabase Auth** (E-Mail/Passwort) und arbeiten danach **direkt** mit
+`@supabase/supabase-js` gegen die Tabellen — autorisiert durch RLS-Policies,
+die auf `is_admin()` prüfen (`security definer`-Funktion gegen die
+`admin_users`-Tabelle). Das ist der Standard-Supabase-Weg für interne
+Dashboards mit echten angemeldeten Nutzern, im Unterschied zum
+öffentlichen Bewerbungsfunnel, der als anonymer Besucher ausschließlich über
+Edge Functions mit `service_role` schreibt.
+
+- **Admin-Verwaltung:** rein manuell — neuer Admin = Supabase-Auth-User im
+  Dashboard anlegen, dann per SQL in `admin_users` verknüpfen (E-Mail-Match).
+  Keine Self-Service-Oberfläche dafür in v1.
+- **Status-Pipeline (ersetzt die alte 5-Werte-Pipeline aus Phase 2):**
+  `neu → gesichtet → unterlagen_unvollstaendig → gespraech →
+  an_klinik_vermittelt → vermittelt_abgeschlossen → abgelehnt →
+  zurueckgezogen`. Jeder Wechsel wird automatisch per Trigger
+  (`bewerbungen_status_verlauf`) in `status_verlauf` protokolliert — auch
+  der initiale Eintrag beim Anlegen einer Bewerbung.
+- **Dokumente:** Tabelle `dokumente` (Typen: Lebenslauf, Urkunde,
+  Anerkennungsbescheid, Arbeitszeugnis, Sprachzertifikat, Sonstiges),
+  mehrere pro Bewerbung, auch ohne Zuordnung möglich (`/admin/unzugeordnet`).
+  Liegen weiterhin im bestehenden privaten `zeugnisse`-Bucket, Pfadschema
+  erweitert auf `bewerbungen/{bewerbung_id}/{dokument_id}` bzw.
+  `unzugeordnet/{dokument_id}`. Der Funnel (`bewerbung-einreichen`) legt bei
+  jedem Zeugnis-Upload zusätzlich automatisch eine `dokumente`-Zeile an.
+- **Audit-Log:** `audit_log` + Funktion `log_admin_audit()` (security
+  definer, setzt `admin_user_id` serverseitig über `auth.uid()` — der Client
+  kann sie nicht fälschen). Protokolliert werden Detailansicht-Aufrufe,
+  Dokumentenabrufe, Notizen, CSV-Exporte und Listen-Abfragen (mit Filtern) —
+  nicht jede einzelne Listenzeile.
+- **Löschen (Art. 17 DSGVO):** ausschließlich über die Edge Function
+  `admin-bewerbung-loeschen` (service_role) — Storage-Objekte lassen sich
+  nicht per RLS/rohem SQL löschen (siehe Phase-2-Erkenntnis), nur über die
+  Storage-API, und ein nur teilweise durchgeführter Cascade-Delete wäre
+  schlimmer als keiner. Die Funktion prüft `is_admin()` über den
+  mitgeschickten Nutzer-JWT, nicht über den service_role-Key selbst.
+- **Aufbewahrung:** `bewerbungen.loeschdatum` (manuell gesetzt, keine
+  automatische Bereinigung in v1 — offene Rechtsfrage aus `docs/SPEC.md`
+  bleibt unverändert offen).
+
 ## Nicht Teil dieses Dokuments
 
 Klinik-Onboarding, Matching-Logik, Benachrichtigungswege, Domain und
